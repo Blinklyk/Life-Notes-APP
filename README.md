@@ -27,6 +27,8 @@ Life Notes App
 
 项目处于产品与技术启动阶段，尚未生成 Xcode 工程。下一步建议在 macOS/Xcode 环境中创建 SwiftUI App，并优先实现“新增文字记录 → 今日时间线 → 本地保存”这条最小闭环。
 
+准备在 macOS 上继续开发时，请从 [docs/MACOS-START.md](docs/MACOS-START.md) 开始，并先阅读根目录 [AGENTS.md](AGENTS.md)。
+
 ## iOS 前端原型
 
 可交互的临时原型位于 [prototypes/ios-ui](prototypes/ios-ui)。它包含“立即记录、今天、日历、日记编辑”四个场景，以及三个可切换的设计方向；当前推荐“一页即记”作为初代基线。
