@@ -1,0 +1,1013 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="随心记 iPhone 前端交互原型">
+  <title>随心记 · iOS UI 原型</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #24201e;
+      --muted: #817875;
+      --paper: #fbf7f1;
+      --accent: #eb6f5f;
+      --accent-deep: #c84f43;
+      --line: rgba(54, 40, 34, .1);
+      --shadow: 0 30px 80px rgba(44, 30, 22, .18);
+      --safe-top: 54px;
+      --safe-bottom: 28px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Helvetica Neue", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    button, textarea, input { font: inherit; }
+    button { cursor: pointer; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 18% 15%, rgba(255, 215, 195, .7), transparent 28%),
+        radial-gradient(circle at 80% 80%, rgba(197, 220, 201, .7), transparent 30%),
+        #eee7df;
+      overflow-x: hidden;
+      transition: background .35s ease;
+    }
+
+    body[data-variant="B"] {
+      background:
+        radial-gradient(circle at 75% 15%, rgba(255, 223, 130, .55), transparent 24%),
+        linear-gradient(145deg, #c8d9d0 0%, #f4ead9 52%, #d5b6a4 100%);
+    }
+
+    body[data-variant="C"] {
+      color: #f7f3ed;
+      background:
+        radial-gradient(circle at 50% 32%, rgba(95, 86, 132, .34), transparent 32%),
+        #17161a;
+    }
+
+    .prototype-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(200px, 1fr) 430px minmax(220px, 1fr);
+      align-items: center;
+      gap: 52px;
+      padding: 48px 48px 100px;
+    }
+
+    .prototype-intro {
+      justify-self: end;
+      max-width: 330px;
+      color: #453d39;
+    }
+
+    body[data-variant="C"] .prototype-intro,
+    body[data-variant="C"] .scene-panel { color: #e8e1da; }
+
+    .eyebrow {
+      margin: 0 0 14px;
+      color: #b6554c;
+      font-size: 12px;
+      font-weight: 760;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    body[data-variant="C"] .eyebrow { color: #baa9ef; }
+
+    .prototype-intro h1 {
+      margin: 0;
+      font-size: clamp(30px, 3vw, 54px);
+      line-height: 1.04;
+      letter-spacing: -.055em;
+    }
+
+    .prototype-intro p {
+      margin: 20px 0 0;
+      max-width: 30ch;
+      color: #776d67;
+      line-height: 1.75;
+      font-size: 14px;
+    }
+
+    body[data-variant="C"] .prototype-intro p { color: #a9a1ad; }
+
+    .iphone {
+      position: relative;
+      width: 390px;
+      height: 844px;
+      border: 8px solid #171515;
+      border-radius: 54px;
+      background: #fff;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .iphone::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(255,255,255,.34);
+      border-radius: 46px;
+      pointer-events: none;
+      z-index: 30;
+    }
+
+    .dynamic-island {
+      position: absolute;
+      z-index: 40;
+      top: 12px;
+      left: 50%;
+      width: 122px;
+      height: 34px;
+      transform: translateX(-50%);
+      border-radius: 22px;
+      background: #050505;
+    }
+
+    .status-bar {
+      position: absolute;
+      z-index: 35;
+      top: 16px;
+      left: 24px;
+      right: 21px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 730;
+      pointer-events: none;
+    }
+
+    .status-icons { display: flex; gap: 5px; align-items: center; }
+    .signal { letter-spacing: -2px; }
+    .battery {
+      width: 20px;
+      height: 9px;
+      border: 1.4px solid currentColor;
+      border-radius: 3px;
+      padding: 1px;
+    }
+    .battery::after { content: ""; display: block; width: 70%; height: 100%; border-radius: 1px; background: currentColor; }
+
+    #app {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .screen {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      scrollbar-width: none;
+    }
+    .screen::-webkit-scrollbar { display: none; }
+
+    .scene-panel {
+      justify-self: start;
+      width: 220px;
+      color: #4a423e;
+    }
+
+    .scene-panel h2 {
+      margin: 0 0 14px;
+      font-size: 13px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      opacity: .64;
+    }
+
+    .scene-list { display: grid; gap: 9px; }
+    .scene-button {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      align-items: center;
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid rgba(55, 42, 36, .1);
+      border-radius: 15px;
+      color: inherit;
+      background: rgba(255,255,255,.34);
+      text-align: left;
+      transition: transform .18s ease, background .18s ease, border .18s ease;
+      backdrop-filter: blur(14px);
+    }
+    .scene-button:hover { transform: translateX(3px); }
+    .scene-button.active {
+      border-color: rgba(226, 92, 78, .32);
+      background: rgba(255,255,255,.78);
+      box-shadow: 0 12px 32px rgba(57,40,32,.09);
+    }
+    body[data-variant="C"] .scene-button {
+      border-color: rgba(255,255,255,.09);
+      background: rgba(255,255,255,.045);
+    }
+    body[data-variant="C"] .scene-button.active {
+      border-color: rgba(195,174,255,.35);
+      background: rgba(255,255,255,.11);
+    }
+    .scene-icon { font-size: 18px; text-align: center; }
+    .scene-name { display: block; font-size: 14px; font-weight: 690; }
+    .scene-desc { display: block; margin-top: 2px; font-size: 11px; opacity: .58; }
+
+    .prototype-switcher {
+      position: fixed;
+      z-index: 100;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%);
+      display: grid;
+      grid-template-columns: 44px minmax(180px, auto) 44px;
+      align-items: center;
+      min-height: 52px;
+      padding: 5px;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 28px;
+      color: #fff;
+      background: rgba(22, 20, 20, .91);
+      box-shadow: 0 16px 42px rgba(0,0,0,.25);
+      backdrop-filter: blur(18px);
+    }
+
+    .prototype-switcher button {
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 50%;
+      color: #fff;
+      background: rgba(255,255,255,.08);
+      font-size: 20px;
+    }
+    .prototype-switcher button:hover { background: rgba(255,255,255,.16); }
+    .variant-label { padding: 0 14px; text-align: center; font-size: 13px; font-weight: 650; white-space: nowrap; }
+    .variant-label small { display: block; margin-top: 2px; color: rgba(255,255,255,.56); font-size: 10px; font-weight: 500; }
+
+    .icon-button {
+      display: inline-grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 50%;
+      color: inherit;
+      background: rgba(255,255,255,.7);
+    }
+
+    .tabbar {
+      position: sticky;
+      z-index: 20;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      align-items: end;
+      min-height: 82px;
+      padding: 8px 22px 22px;
+      border-top: 1px solid rgba(50,40,34,.07);
+      background: rgba(252,249,245,.91);
+      backdrop-filter: blur(20px);
+    }
+    .tabbar button {
+      display: grid;
+      gap: 3px;
+      place-items: center;
+      border: 0;
+      color: #8c817b;
+      background: transparent;
+      font-size: 10px;
+    }
+    .tabbar button.active { color: var(--accent-deep); font-weight: 760; }
+    .tabbar .tab-icon { font-size: 20px; line-height: 1; }
+    .tabbar .new-entry {
+      align-self: start;
+      width: 46px;
+      height: 46px;
+      margin-top: -18px;
+      border-radius: 17px;
+      color: #fff;
+      background: var(--accent);
+      box-shadow: 0 10px 24px rgba(223,95,80,.32);
+      font-size: 26px;
+    }
+
+    /* Variant A — One-page capture */
+    .variant-a {
+      color: #292321;
+      background:
+        linear-gradient(rgba(255,255,255,.28), rgba(255,255,255,.28)),
+        radial-gradient(circle at 82% 4%, rgba(255,205,184,.45), transparent 30%),
+        #fbf7f1;
+    }
+
+    .a-capture { padding: 64px 20px 28px; }
+    .a-topline { display: flex; align-items: center; justify-content: space-between; }
+    .wordmark { display: flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 800; letter-spacing: -.02em; }
+    .wordmark-mark { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 10px 10px 10px 3px; color: white; background: var(--accent); font-size: 13px; }
+    .ghost-link { border: 0; color: #8c7770; background: transparent; font-size: 12px; }
+    .capture-date { margin: 31px 0 5px; color: #ae8e83; font-size: 12px; font-weight: 680; }
+    .a-capture h1 { margin: 0; max-width: 280px; font-size: 31px; line-height: 1.15; letter-spacing: -.055em; }
+    .thought-input {
+      width: 100%;
+      min-height: 104px;
+      margin: 19px 0 8px;
+      padding: 0;
+      border: 0;
+      outline: 0;
+      resize: none;
+      color: #403633;
+      background: transparent;
+      font-size: 17px;
+      line-height: 1.7;
+    }
+    .thought-input::placeholder { color: #b9aca6; }
+    .capture-tools { display: flex; gap: 8px; margin: 3px 0 17px; }
+    .capture-tool {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 12px;
+      border: 1px solid rgba(71,53,46,.08);
+      border-radius: 13px;
+      color: #6d5e59;
+      background: rgba(255,255,255,.68);
+      font-size: 12px;
+    }
+    .capture-tool.primary { color: #a64940; background: #fff0eb; }
+    .media-stack { display: grid; gap: 10px; }
+    .media-note {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      min-height: 104px;
+      border: 1px solid rgba(67,48,40,.08);
+      border-radius: 20px;
+      overflow: hidden;
+      background: rgba(255,255,255,.74);
+      box-shadow: 0 10px 28px rgba(76,50,35,.06);
+    }
+    .photo { background-size: cover; background-position: center; }
+    .photo-coffee { background-image: linear-gradient(20deg, rgba(65,38,24,.1), rgba(255,255,255,.05)), url('https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=420&q=80'); }
+    .photo-walk { background-image: linear-gradient(20deg, rgba(40,67,46,.12), rgba(255,255,255,.02)), url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=420&q=80'); }
+    .photo-sunset { background-image: linear-gradient(20deg, rgba(90,50,40,.1), rgba(255,255,255,.02)), url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=600&q=80'); }
+    .media-copy { display: flex; flex-direction: column; justify-content: space-between; padding: 13px 13px 11px; }
+    .media-copy label { color: #9a8880; font-size: 10px; font-weight: 720; letter-spacing: .04em; }
+    .annotation-input { width: 100%; padding: 7px 0 5px; border: 0; border-bottom: 1px solid #eee3dd; outline: none; color: #493d39; background: transparent; font-size: 13px; }
+    .media-actions { display: flex; justify-content: space-between; align-items: center; color: #aa9991; font-size: 10px; }
+    .mic-mini { display: inline-grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 10px; color: #a44a42; background: #ffede8; }
+    .voice-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+      padding: 12px 14px;
+      border: 1px solid rgba(70,49,42,.08);
+      border-radius: 17px;
+      color: #5b4d48;
+      background: rgba(255,255,255,.72);
+    }
+    .voice-card.recording { color: #b53e35; background: #fff0ed; }
+    .voice-circle { display: grid; place-items: center; width: 38px; height: 38px; border: 0; border-radius: 50%; color: white; background: var(--accent); box-shadow: 0 8px 18px rgba(229,96,80,.25); }
+    .voice-meta { flex: 1; }
+    .voice-title { display: block; font-size: 13px; font-weight: 700; }
+    .voice-subtitle { display: block; margin-top: 3px; color: #a08f88; font-size: 10px; }
+    .wave { color: #dd897e; letter-spacing: 1px; font-size: 10px; }
+    .submit-entry {
+      position: sticky;
+      bottom: 0;
+      width: 100%;
+      margin-top: 14px;
+      padding: 15px 18px;
+      border: 0;
+      border-radius: 17px;
+      color: #fff;
+      background: #292321;
+      box-shadow: 0 12px 26px rgba(42,34,31,.18);
+      font-weight: 740;
+    }
+
+    .a-page { min-height: 100%; padding: 64px 18px 0; }
+    .page-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .page-kicker { display: block; color: #b17769; font-size: 11px; font-weight: 750; }
+    .page-title { margin: 4px 0 0; font-size: 29px; letter-spacing: -.05em; }
+    .avatar { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 15px; background: #edddd3; font-size: 16px; }
+    .day-controls { display: flex; gap: 8px; margin: 18px 0; }
+    .pill { padding: 8px 11px; border: 1px solid rgba(80,60,52,.08); border-radius: 999px; color: #76645e; background: rgba(255,255,255,.68); font-size: 11px; }
+    .pill.active { color: #ad4e43; background: #ffebe6; }
+    .journal-card { position: relative; overflow: hidden; padding: 20px; border-radius: 24px; color: #fff9f4; background: linear-gradient(145deg, #bd665b, #754b48); box-shadow: 0 16px 35px rgba(117,69,64,.2); }
+    .journal-card::after { content: ""; position: absolute; width: 130px; height: 130px; right: -35px; top: -50px; border-radius: 50%; background: rgba(255,255,255,.11); }
+    .journal-label { display: flex; justify-content: space-between; color: rgba(255,255,255,.72); font-size: 10px; }
+    .journal-card h3 { margin: 23px 0 8px; max-width: 260px; font-family: Georgia, "Songti SC", serif; font-size: 23px; font-weight: 500; line-height: 1.32; }
+    .journal-card p { margin: 0; color: rgba(255,255,255,.77); font-size: 12px; line-height: 1.65; }
+    .journal-card button { margin-top: 15px; padding: 8px 11px; border: 0; border-radius: 11px; color: #68433f; background: #fff4ed; font-size: 11px; font-weight: 720; }
+    .section-title { display: flex; justify-content: space-between; align-items: center; margin: 24px 2px 12px; }
+    .section-title h3 { margin: 0; font-size: 15px; }
+    .section-title span { color: #9d8d86; font-size: 10px; }
+    .timeline { position: relative; padding: 0 0 20px 16px; }
+    .timeline::before { content: ""; position: absolute; top: 12px; bottom: 12px; left: 4px; width: 1px; background: #e9dcd5; }
+    .timeline-item { position: relative; margin-bottom: 11px; padding: 14px; border-radius: 17px; background: rgba(255,255,255,.76); box-shadow: 0 8px 23px rgba(64,43,35,.05); }
+    .timeline-item::before { content: ""; position: absolute; left: -15px; top: 19px; width: 7px; height: 7px; border: 2px solid #fbf7f1; border-radius: 50%; background: var(--accent); }
+    .timeline-time { color: #ad978e; font-size: 9px; font-weight: 720; }
+    .timeline-item p { margin: 6px 0 0; font-size: 12px; line-height: 1.55; }
+    .timeline-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; height: 78px; margin-top: 10px; }
+    .timeline-photos div { border-radius: 11px; }
+    .audio-chip { display: flex; align-items: center; gap: 8px; margin-top: 9px; padding: 8px 10px; border-radius: 12px; color: #775e58; background: #fff1ec; font-size: 10px; }
+
+    .calendar-card { margin-top: 18px; padding: 16px 14px 18px; border-radius: 24px; background: rgba(255,255,255,.72); box-shadow: 0 14px 35px rgba(67,45,36,.06); }
+    .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin: 2px 2px 16px; }
+    .calendar-nav strong { font-size: 16px; }
+    .calendar-nav button { border: 0; color: #8f7b74; background: transparent; }
+    .week-grid, .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; }
+    .week-grid { margin-bottom: 8px; color: #b0a09a; font-size: 9px; }
+    .day-cell { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 49px; border: 0; border-radius: 14px; color: #5e514c; background: transparent; font-size: 11px; }
+    .day-number { line-height: 1; }
+    .day-cell.muted { color: #cfc3bd; }
+    .day-cell.selected { color: #fff; background: var(--accent); box-shadow: 0 7px 16px rgba(229,95,79,.28); }
+    .day-cell.has-entry.no-rating:not(.selected)::after { content: ""; position: absolute; bottom: 5px; width: 4px; height: 4px; border-radius: 50%; background: #d27669; }
+    .day-cell.important::before { content: "♥"; position: absolute; top: 2px; right: 4px; color: #db8277; font-size: 7px; }
+    .satisfaction-mark { display: block; width: 17px; height: 17px; line-height: 0; }
+    .satisfaction-mark svg { width: 100%; height: 100%; overflow: visible; }
+    .satisfaction-mark .petal { fill: transparent; stroke: #d8c9c2; stroke-width: 1.05; transition: fill .2s ease, stroke .2s ease; }
+    .satisfaction-mark .petal.filled { fill: #e36f61; stroke: #e36f61; }
+    .satisfaction-mark .flower-center { fill: #d8c9c2; }
+    .day-cell.selected .satisfaction-mark .petal { stroke: rgba(255,255,255,.55); }
+    .day-cell.selected .satisfaction-mark .petal.filled { fill: #fff; stroke: #fff; }
+    .day-cell.selected .satisfaction-mark .flower-center { fill: #fff; }
+    .satisfaction-legend { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 9px; padding-top: 10px; border-top: 1px solid #f0e7e1; color: #9d8b84; font-size: 9px; }
+    .satisfaction-legend .satisfaction-mark { width: 15px; height: 15px; }
+    .satisfaction-arrow { color: #c8b7af; font-size: 11px; }
+    .memory-preview { display: grid; grid-template-columns: 66px 1fr auto; gap: 11px; align-items: center; margin-top: 14px; padding: 11px; border-radius: 18px; background: #fff; }
+    .memory-preview .photo { height: 58px; border-radius: 13px; }
+    .memory-preview strong { display: block; font-size: 12px; }
+    .memory-preview span { display: block; margin-top: 4px; color: #9d8b84; font-size: 9px; }
+
+    .editor-page { padding: 61px 16px 110px; background: #f7f0e7; }
+    .editor-top { display: flex; justify-content: space-between; align-items: center; }
+    .editor-top button { border: 0; color: #806e67; background: transparent; font-size: 12px; }
+    .editor-top .save { padding: 8px 12px; border-radius: 12px; color: #fff; background: #2a2422; font-weight: 700; }
+    .version-chip { display: inline-block; margin-top: 24px; padding: 6px 9px; border-radius: 999px; color: #a65b50; background: #ffe5dd; font-size: 9px; font-weight: 740; }
+    .editor-title { display: block; width: 100%; min-height: 78px; margin: 12px 0 8px; padding: 0; border: 0; outline: 0; resize: none; overflow: hidden; color: #342b28; background: transparent; font-family: Georgia, "Songti SC", serif; font-size: 29px; line-height: 1.25; }
+    .editor-date { color: #a18f86; font-size: 10px; }
+    .editor-body { margin-top: 17px; font-family: Georgia, "Songti SC", serif; font-size: 14px; line-height: 1.95; }
+    .editor-body p { margin: 0 0 15px; }
+    .editor-collage { display: grid; grid-template-columns: 1.2fr .8fr; grid-template-rows: 84px 84px; gap: 6px; margin: 19px 0; }
+    .editor-collage .photo { border-radius: 15px; }
+    .editor-collage .photo:first-child { grid-row: 1 / span 2; }
+    .caption { margin-top: -10px; color: #9d8b84; font-size: 9px; text-align: center; }
+    .editor-toolbar { position: absolute; z-index: 10; left: 16px; right: 16px; bottom: 25px; display: grid; grid-template-columns: repeat(5, 1fr); padding: 8px; border: 1px solid rgba(50,40,34,.08); border-radius: 18px; background: rgba(255,255,255,.93); box-shadow: 0 14px 34px rgba(45,32,27,.13); backdrop-filter: blur(18px); }
+    .editor-toolbar button { border: 0; color: #77645e; background: transparent; font-size: 18px; }
+
+    /* Variant B — Scrapbook */
+    .variant-b { color: #312c28; background: #efe6d7; }
+    .b-capture { padding: 63px 18px 24px; background: linear-gradient(165deg, #f2dfbd 0%, #edf0e7 47%, #d9cabd 100%); }
+    .b-header { display: flex; justify-content: space-between; align-items: center; }
+    .b-date { font-family: Georgia, serif; font-size: 20px; font-style: italic; }
+    .tiny-avatar { width: 34px; height: 34px; border-radius: 50%; border: 2px solid rgba(255,255,255,.8); background: linear-gradient(135deg,#c77c69,#664a45); box-shadow: 0 6px 14px rgba(65,43,34,.15); }
+    .scrap-stage { position: relative; min-height: 595px; margin-top: 18px; }
+    .tape { position: absolute; z-index: 3; width: 58px; height: 18px; background: rgba(255,233,170,.72); transform: rotate(-7deg); box-shadow: inset 0 0 0 1px rgba(120,90,50,.05); }
+    .scrap-photo { position: absolute; width: 150px; padding: 8px 8px 26px; background: #fffdf9; box-shadow: 0 14px 24px rgba(69,46,34,.16); }
+    .scrap-photo .photo { height: 128px; }
+    .scrap-photo small { display: block; margin-top: 7px; color: #75645c; font-family: "Bradley Hand", "Kaiti SC", cursive; font-size: 11px; }
+    .scrap-photo.one { top: 0; left: 5px; transform: rotate(-4deg); }
+    .scrap-photo.two { top: 38px; right: 2px; transform: rotate(5deg); }
+    .note-paper { position: absolute; z-index: 2; top: 190px; left: 4px; right: 4px; min-height: 280px; padding: 27px 22px 20px; background: repeating-linear-gradient(#fffdf8 0, #fffdf8 31px, #e8ddd2 32px); box-shadow: 0 16px 30px rgba(69,46,34,.12); transform: rotate(-.8deg); }
+    .note-paper::before { content: "今天，想留下……"; display: block; margin-bottom: 8px; color: #b87562; font-family: "Kaiti SC", serif; font-size: 19px; }
+    .note-paper textarea { width: 100%; min-height: 145px; padding: 0; border: 0; outline: 0; resize: none; color: #4c413b; background: transparent; font-family: "Kaiti SC", serif; font-size: 15px; line-height: 2.1; }
+    .stamp-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+    .stamp-actions { display: flex; gap: 8px; }
+    .stamp-actions button { display: grid; place-items: center; width: 38px; height: 38px; border: 1px dashed #c8957e; border-radius: 50%; color: #b76857; background: #fff7f0; }
+    .postmark { width: 64px; height: 64px; display: grid; place-items: center; border: 2px solid #bd7765; border-radius: 50%; color: #bd7765; font-size: 9px; font-weight: 800; text-align: center; transform: rotate(-8deg); }
+    .b-submit { position: absolute; left: 50%; bottom: 5px; transform: translateX(-50%); width: 174px; padding: 14px; border: 0; border-radius: 999px; color: #fff; background: #4c5144; box-shadow: 0 10px 25px rgba(53,58,48,.24); font-weight: 750; }
+
+    .b-page { min-height: 100%; padding: 61px 17px 0; background: #ece4d7; }
+    .album-title { display: flex; justify-content: space-between; align-items: end; }
+    .album-title h1 { margin: 0; font-family: Georgia, "Songti SC", serif; font-size: 32px; font-weight: 500; }
+    .album-title span { color: #9a7d70; font-size: 10px; }
+    .album-hero { position: relative; height: 275px; margin-top: 18px; border-radius: 4px; background: #fdf9f2; box-shadow: 0 15px 35px rgba(65,45,35,.13); transform: rotate(.8deg); }
+    .album-hero .photo { position: absolute; top: 14px; left: 14px; right: 14px; height: 166px; }
+    .album-hero-copy { position: absolute; left: 18px; right: 18px; bottom: 18px; }
+    .album-hero-copy small { color: #b46d59; font-size: 9px; font-weight: 800; letter-spacing: .11em; }
+    .album-hero-copy h2 { margin: 6px 0 4px; font-family: "Kaiti SC", Georgia, serif; font-size: 20px; font-weight: 500; }
+    .album-hero-copy p { margin: 0; color: #85766e; font-size: 10px; line-height: 1.5; }
+    .memory-strip { display: flex; gap: 12px; margin: 26px -17px 0; padding: 0 17px 20px; overflow-x: auto; scrollbar-width: none; }
+    .memory-ticket { flex: 0 0 156px; min-height: 150px; padding: 11px; border-radius: 4px; background: #fffaf2; box-shadow: 0 10px 24px rgba(61,43,34,.1); }
+    .memory-ticket:nth-child(2) { transform: rotate(-2deg); }
+    .memory-ticket .photo { height: 86px; }
+    .memory-ticket strong { display: block; margin-top: 9px; font-family: "Kaiti SC", serif; font-size: 13px; }
+    .memory-ticket span { display: block; margin-top: 3px; color: #9b877d; font-size: 9px; }
+    .b-tabbar { background: rgba(239,232,220,.94); }
+    .b-tabbar .new-entry { border-radius: 50%; background: #555b4c; box-shadow: 0 10px 24px rgba(62,69,56,.28); }
+
+    .b-calendar .calendar-card { border-radius: 4px; background: #fffaf2; transform: rotate(-.5deg); }
+    .b-calendar .day-cell.selected { background: #69705e; box-shadow: none; }
+    .b-calendar .day-cell.has-entry.no-rating:not(.selected)::after { background: #bc745e; }
+    .b-calendar .satisfaction-mark .petal.filled { fill: #b96f5b; stroke: #b96f5b; }
+    .b-calendar .satisfaction-legend { border-color: #eadfd1; }
+    .month-note { margin-top: 18px; padding: 15px; border-left: 3px solid #c27a65; color: #6e5b52; background: rgba(255,250,242,.7); font-family: "Kaiti SC", serif; font-size: 13px; line-height: 1.7; }
+    .b-editor { background: #e8dfd1; }
+    .b-editor .paper-sheet { min-height: 690px; padding: 20px; background: #fffaf2; box-shadow: 0 15px 35px rgba(60,43,34,.13); transform: rotate(.4deg); }
+    .b-editor .editor-collage { transform: rotate(-1.2deg); }
+
+    /* Variant C — Immersive voice */
+    .variant-c { color: #f5f0ea; background: #151419; }
+    .c-capture { padding: 63px 20px 26px; background: radial-gradient(circle at 50% 36%, #342d43 0%, #1d1b23 35%, #151419 68%); }
+    .c-top { display: flex; justify-content: space-between; align-items: center; color: #d7d0db; }
+    .c-top strong { font-size: 14px; letter-spacing: .08em; }
+    .c-top button { border: 0; color: #b6a9c1; background: transparent; font-size: 12px; }
+    .c-prompt { margin-top: 44px; text-align: center; }
+    .c-prompt span { color: #a99bb5; font-size: 11px; }
+    .c-prompt h1 { margin: 8px auto 0; max-width: 260px; font-size: 29px; line-height: 1.18; letter-spacing: -.045em; }
+    .voice-orbit-wrap { position: relative; display: grid; place-items: center; height: 276px; }
+    .voice-orbit, .voice-orbit::before, .voice-orbit::after { position: absolute; border-radius: 50%; }
+    .voice-orbit { width: 176px; height: 176px; border: 1px solid rgba(194,171,255,.26); animation: breathe 3s ease-in-out infinite; }
+    .voice-orbit::before { content: ""; inset: 18px; border: 1px solid rgba(194,171,255,.2); }
+    .voice-orbit::after { content: ""; inset: 40px; background: radial-gradient(circle at 35% 28%, #d9c7ff, #8d6bd7 46%, #4a386f); box-shadow: 0 0 55px rgba(143,104,224,.44); }
+    .voice-main { position: relative; z-index: 2; display: grid; place-items: center; width: 76px; height: 76px; border: 0; border-radius: 50%; color: #fff; background: transparent; font-size: 29px; }
+    .voice-main.recording { color: #ffd2ca; }
+    @keyframes breathe { 0%,100% { transform: scale(.96); opacity: .75; } 50% { transform: scale(1.04); opacity: 1; } }
+    .c-record-status { margin-top: -25px; color: #bfb1cb; font-size: 11px; text-align: center; }
+    .c-quick-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 24px; }
+    .c-quick-card { min-height: 84px; padding: 14px; border: 1px solid rgba(255,255,255,.08); border-radius: 20px; color: #ece5ef; background: rgba(255,255,255,.055); text-align: left; backdrop-filter: blur(12px); }
+    .c-quick-card span { display: block; color: #b8adbc; font-size: 10px; }
+    .c-quick-card strong { display: block; margin-top: 8px; font-size: 13px; }
+    .c-text-sheet { margin-top: 12px; padding: 15px; border: 1px solid rgba(255,255,255,.08); border-radius: 20px; background: rgba(255,255,255,.045); }
+    .c-text-sheet textarea { width: 100%; min-height: 70px; padding: 0; border: 0; outline: 0; resize: none; color: #f0e9f1; background: transparent; font-size: 14px; line-height: 1.6; }
+    .c-text-sheet textarea::placeholder { color: #716b79; }
+    .c-submit { width: 100%; margin-top: 12px; padding: 14px; border: 0; border-radius: 17px; color: #211b2b; background: #d9c7ff; font-weight: 790; }
+
+    .c-page { min-height: 100%; padding: 62px 18px 0; background: #17161b; }
+    .c-page .page-kicker { color: #a994df; }
+    .c-page .page-title { color: #f6f0ea; }
+    .c-page .avatar { background: #302a3c; }
+    .c-day-state { display: grid; grid-template-columns: 92px 1fr; gap: 14px; margin: 22px 0; }
+    .mood-orb { display: grid; place-items: center; aspect-ratio: 1; border: 1px solid rgba(207,186,255,.2); border-radius: 31px; color: #f2d5a5; background: radial-gradient(circle, #5a4935, #282326 68%); font-size: 34px; }
+    .c-summary { padding: 15px; border: 1px solid rgba(255,255,255,.07); border-radius: 24px; background: rgba(255,255,255,.045); }
+    .c-summary span { color: #9f94a6; font-size: 9px; }
+    .c-summary h3 { margin: 8px 0 0; font-family: Georgia, "Songti SC", serif; font-size: 18px; font-weight: 500; line-height: 1.35; }
+    .c-timeline { margin-top: 18px; }
+    .c-entry { display: grid; grid-template-columns: 54px 1fr; gap: 13px; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,.07); }
+    .c-entry-time { color: #807888; font-size: 10px; }
+    .c-entry p { margin: 0; color: #ded6df; font-size: 12px; line-height: 1.6; }
+    .c-entry .photo { height: 92px; margin-top: 9px; border-radius: 17px; }
+    .c-tabbar { border-color: rgba(255,255,255,.06); background: rgba(22,21,26,.94); }
+    .c-tabbar button { color: #766f7e; }
+    .c-tabbar button.active { color: #cdb9ff; }
+    .c-tabbar .new-entry { color: #201a2a; background: #cdb9ff; box-shadow: 0 10px 24px rgba(168,137,234,.24); }
+    .c-calendar .calendar-card { border: 1px solid rgba(255,255,255,.07); color: #ede7ee; background: rgba(255,255,255,.045); box-shadow: none; }
+    .c-calendar .calendar-nav button, .c-calendar .week-grid { color: #8a8290; }
+    .c-calendar .day-cell { color: #cfc7d1; }
+    .c-calendar .day-cell.muted { color: #4f4a53; }
+    .c-calendar .day-cell.selected { color: #211a2d; background: #cdb9ff; box-shadow: 0 8px 19px rgba(168,137,234,.25); }
+    .c-calendar .satisfaction-mark .petal { stroke: #5e5665; }
+    .c-calendar .satisfaction-mark .petal.filled { fill: #bca5f4; stroke: #bca5f4; }
+    .c-calendar .satisfaction-mark .flower-center { fill: #5e5665; }
+    .c-calendar .satisfaction-legend { border-color: rgba(255,255,255,.07); color: #8f8795; }
+    .c-calendar .memory-preview { color: #ece5ee; background: rgba(255,255,255,.06); }
+    .c-editor { color: #eee7ef; background: #17161b; }
+    .c-editor .editor-top button { color: #a79eaa; }
+    .c-editor .editor-top .save { color: #201a29; background: #cdb9ff; }
+    .c-editor .editor-title { color: #f5eef6; }
+    .c-editor .editor-body { color: #d8d0da; }
+    .c-editor .editor-toolbar { border-color: rgba(255,255,255,.08); background: rgba(43,40,48,.94); }
+    .c-editor .editor-toolbar button { color: #c7b8e1; }
+
+    .toast {
+      position: absolute;
+      z-index: 50;
+      top: 55px;
+      left: 50%;
+      transform: translate(-50%, -12px);
+      padding: 9px 14px;
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(26,23,23,.9);
+      box-shadow: 0 8px 22px rgba(0,0,0,.2);
+      opacity: 0;
+      transition: opacity .2s ease, transform .2s ease;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    body.preview { background: #111 !important; }
+    body.preview .prototype-shell { display: block; padding: 0; }
+    body.preview .prototype-intro,
+    body.preview .scene-panel,
+    body.preview .prototype-switcher { display: none; }
+    body.preview .iphone {
+      width: 100vw;
+      height: 100vh;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+    body.preview .iphone::after { display: none; }
+
+    @media (max-width: 1050px) {
+      .prototype-shell { grid-template-columns: 1fr 430px; gap: 28px; padding-left: 28px; padding-right: 28px; }
+      .prototype-intro { display: none; }
+      .scene-panel { justify-self: start; }
+    }
+
+    @media (max-width: 720px) {
+      body { background: #121114 !important; }
+      .prototype-shell { display: block; padding: 0 0 88px; }
+      .iphone { width: 100%; height: calc(100vh - 82px); min-height: 680px; border: 0; border-radius: 0; box-shadow: none; }
+      .iphone::after { display: none; }
+      .scene-panel { position: fixed; z-index: 80; top: 54px; right: 8px; width: auto; }
+      .scene-panel h2, .scene-desc { display: none; }
+      .scene-list { display: flex; gap: 4px; padding: 4px; border-radius: 16px; background: rgba(26,24,25,.8); backdrop-filter: blur(16px); }
+      .scene-button { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 12px; color: #fff; background: transparent; }
+      .scene-button.active { background: rgba(255,255,255,.16); box-shadow: none; }
+      .scene-name { display: none; }
+      .prototype-switcher { bottom: 12px; grid-template-columns: 42px 150px 42px; }
+      .variant-label { padding: 0 6px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="prototype-shell">
+    <section class="prototype-intro" aria-labelledby="prototype-title">
+      <p class="eyebrow">Suixinji · iOS prototype</p>
+      <h1 id="prototype-title">打开 App，<br>念头正好在。</h1>
+      <p id="variant-description">一页即记把文字放在第一焦点，同时允许图片与语音自然加入，不先让用户选择“记录类型”。</p>
+    </section>
+
+    <section class="iphone" aria-label="iPhone 前端原型">
+      <div class="dynamic-island" aria-hidden="true"></div>
+      <div class="status-bar" aria-hidden="true">
+        <span>9:41</span>
+        <span class="status-icons"><span class="signal">▮▮▮</span><span>⌁</span><span class="battery"></span></span>
+      </div>
+      <div id="app"></div>
+      <div id="toast" class="toast" role="status">已保存到今天</div>
+    </section>
+
+    <aside class="scene-panel" aria-label="原型场景">
+      <h2>查看场景</h2>
+      <div class="scene-list">
+        <button class="scene-button" data-screen="capture"><span class="scene-icon">✦</span><span><span class="scene-name">立即记录</span><span class="scene-desc">App 启动第一屏</span></span></button>
+        <button class="scene-button" data-screen="today"><span class="scene-icon">☀</span><span><span class="scene-name">今天</span><span class="scene-desc">提交后的时间线</span></span></button>
+        <button class="scene-button" data-screen="calendar"><span class="scene-icon">▦</span><span><span class="scene-name">日历</span><span class="scene-desc">回看记录日</span></span></button>
+        <button class="scene-button" data-screen="diary"><span class="scene-icon">✎</span><span><span class="scene-name">日记编辑</span><span class="scene-desc">富媒体日记</span></span></button>
+      </div>
+    </aside>
+  </main>
+
+  <nav class="prototype-switcher" aria-label="切换设计方向">
+    <button id="previous-variant" aria-label="上一个设计方向">←</button>
+    <div class="variant-label"><span id="variant-label"></span><small>键盘 ← → 也可切换</small></div>
+    <button id="next-variant" aria-label="下一个设计方向">→</button>
+  </nav>
+
+  <script>
+    // Three variants of the capture-first iPhone app, switchable via ?variant=.
+    const variants = {
+      A: {
+        name: '一页即记',
+        description: '一页即记把文字放在第一焦点，同时允许图片与语音自然加入，不先让用户选择“记录类型”。'
+      },
+      B: {
+        name: '生活拼贴',
+        description: '生活拼贴把每一天做成一本手账，强调照片、批注与“留下这一刻”的情绪价值。'
+      },
+      C: {
+        name: '沉浸语音',
+        description: '沉浸语音用一个明确的录音焦点降低开口门槛，文字和图片作为安静的辅助入口。'
+      }
+    };
+    const screens = new Set(['capture', 'today', 'calendar', 'diary']);
+    const params = new URLSearchParams(location.search);
+    let variant = variants[params.get('variant')] ? params.get('variant') : 'A';
+    let screen = screens.has(params.get('screen')) ? params.get('screen') : 'capture';
+    document.body.classList.toggle('preview', params.get('preview') === '1');
+    let recording = false;
+    let recordingStartedAt = 0;
+    let recordingTimer = null;
+
+    const app = document.getElementById('app');
+    const toast = document.getElementById('toast');
+
+    function photo(className, label = '') {
+      return `<div class="photo ${className}" role="img" aria-label="${label}"></div>`;
+    }
+
+    function tabbar(current, extraClass = '') {
+      return `<nav class="tabbar ${extraClass}" aria-label="主导航">
+        <button data-action="go-today" class="${current === 'today' ? 'active' : ''}"><span class="tab-icon">☀</span><span>今天</span></button>
+        <button data-action="go-capture" class="new-entry" aria-label="立即记录">＋</button>
+        <button data-action="go-calendar" class="${current === 'calendar' ? 'active' : ''}"><span class="tab-icon">▦</span><span>日历</span></button>
+      </nav>`;
+    }
+
+    function mediaNotes() {
+      return `<div class="media-stack">
+        <article class="media-note">
+          ${photo('photo-coffee', '窗边的一杯咖啡')}
+          <div class="media-copy">
+            <label>这张照片为什么值得记下？</label>
+            <input class="annotation-input" value="终于给自己留了一个慢下来的下午" aria-label="咖啡照片批注">
+            <div class="media-actions"><span>照片 1 / 2</span><button class="mic-mini" data-action="toggle-recording" aria-label="语音批注">⌁</button></div>
+          </div>
+        </article>
+        <article class="media-note">
+          ${photo('photo-walk', '林间散步')}
+          <div class="media-copy">
+            <label>可选批注</label>
+            <input class="annotation-input" placeholder="写一句，或用语音说说看" aria-label="散步照片批注">
+            <div class="media-actions"><span>照片 2 / 2</span><button class="mic-mini" data-action="toggle-recording" aria-label="语音批注">⌁</button></div>
+          </div>
+        </article>
+      </div>`;
+    }
+
+    function captureA() {
+      return `<section class="screen variant-a a-capture">
+        <div class="a-topline"><div class="wordmark"><span class="wordmark-mark">心</span>随心记</div><button class="ghost-link" data-action="go-today">查看今天</button></div>
+        <p class="capture-date">7 月 12 日 · 周日 · 20:46</p>
+        <h1>现在，想记下什么？</h1>
+        <textarea class="thought-input" aria-label="随心记录正文" placeholder="不用整理好，想到哪里就写到哪里……">今天没有发生什么大事，但傍晚散步时，忽然觉得自己已经很久没有这样慢慢看一棵树了。</textarea>
+        <div class="capture-tools">
+          <button class="capture-tool primary" data-action="add-photo">▧ 从相册添加</button>
+          <button class="capture-tool" data-action="toggle-recording">● 说一段</button>
+        </div>
+        ${mediaNotes()}
+        <div class="voice-card ${recording ? 'recording' : ''}">
+          <button class="voice-circle" data-action="toggle-recording">${recording ? '■' : '●'}</button>
+          <div class="voice-meta"><span class="voice-title">${recording ? '正在聆听…' : '再补充一段语音'}</span><span class="voice-subtitle">${recording ? '点击停止，转写将在 iPhone 完成' : '可保留录音，或只保存转写文字'}</span></div>
+          <span class="wave">${recording ? '▂▅▃▇▆▂' : '00:00'}</span>
+        </div>
+        <button class="submit-entry" data-action="submit">记下这一刻　→</button>
+      </section>`;
+    }
+
+    function todayA() {
+      return `<section class="screen variant-a a-page">
+        <header class="page-header"><div><span class="page-kicker">JUL 12 · SUNDAY</span><h1 class="page-title">今天</h1></div><div class="avatar">☺</div></header>
+        <div class="day-controls"><button class="pill active">心情 · 平静</button><button class="pill">♡ 重要的一天</button><button class="pill">3 条记录</button></div>
+        <article class="journal-card">
+          <div class="journal-label"><span>今日随心日记</span><span>22:30 自动生成</span></div>
+          <h3>慢下来以后，日子忽然有了纹理</h3>
+          <p>咖啡、树影和一小段没有目的的散步，拼成了今天最值得留下的部分。</p>
+          <button data-action="go-diary">打开并编辑 →</button>
+        </article>
+        <div class="section-title"><h3>随心记录</h3><span>按时间排列</span></div>
+        <div class="timeline">
+          <article class="timeline-item"><span class="timeline-time">20:46</span><p>傍晚散步时，忽然觉得自己已经很久没有这样慢慢看一棵树了。</p><div class="timeline-photos">${photo('photo-coffee', '咖啡')}${photo('photo-walk', '树林')}</div></article>
+          <article class="timeline-item"><span class="timeline-time">15:18</span><p>给自己留了一个没有安排的下午。</p><div class="audio-chip">▶　00:18　<span>“好像终于松了一口气……”</span></div></article>
+          <article class="timeline-item"><span class="timeline-time">09:12</span><p>今天想少做一点，但认真感受每一件小事。</p></article>
+        </div>
+        ${tabbar('today')}
+      </section>`;
+    }
+
+    function satisfactionFlower(level) {
+      const petals = [0, 72, 144, 216, 288].map((rotation, index) =>
+        `<ellipse class="petal ${index < level ? 'filled' : ''}" cx="8" cy="3.9" rx="2.05" ry="3" transform="rotate(${rotation} 8 8)"></ellipse>`
+      ).join('');
+      return `<span class="satisfaction-mark" role="img" aria-label="满意度 ${level} / 5"><svg viewBox="0 0 16 16" aria-hidden="true">${petals}<circle class="flower-center" cx="8" cy="8" r="1.25"></circle></svg></span>`;
+    }
+
+    function satisfactionLegend() {
+      return `<div class="satisfaction-legend">${satisfactionFlower(1)}<span>满意度</span><span class="satisfaction-arrow">→</span>${satisfactionFlower(5)}<span>花开得越满，今天越满意</span></div>`;
+    }
+
+    function calendarGrid() {
+      const days = [29,30,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,1,2];
+      const satisfactionByDay = { 4: 2, 7: 5, 9: 3, 12: 4, 15: 2, 18: 4, 22: 1, 26: 3 };
+      return days.map((day, index) => {
+        const muted = index < 2 || index > 32 ? 'muted' : '';
+        const selected = day === 12 && index < 20 ? 'selected' : '';
+        const entry = [4,7,9,12,15,18,22,26].includes(day) && !muted ? 'has-entry' : '';
+        const important = day === 7 || day === 22 ? 'important' : '';
+        const level = !muted ? (satisfactionByDay[day] || 0) : 0;
+        const noRating = entry && !level ? 'no-rating' : '';
+        const rating = level ? satisfactionFlower(level) : '';
+        const label = level ? `${day} 日，满意度 ${level} / 5` : `${day} 日`;
+        return `<button class="day-cell ${muted} ${selected} ${entry} ${important} ${noRating}" data-action="select-day" aria-label="${label}"><span class="day-number">${day}</span>${rating}</button>`;
+      }).join('');
+    }
+
+    function calendarA(extraClass = '') {
+      return `<section class="screen variant-a a-page ${extraClass}">
+        <header class="page-header"><div><span class="page-kicker">MEMORIES</span><h1 class="page-title">日历</h1></div><button class="icon-button">⌕</button></header>
+        <div class="calendar-card">
+          <div class="calendar-nav"><button>‹</button><strong>2026 年 7 月</strong><button>›</button></div>
+          <div class="week-grid"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+          <div class="days-grid">${calendarGrid()}</div>
+          ${satisfactionLegend()}
+        </div>
+        <article class="memory-preview">${photo('photo-sunset', '今日回忆')}<div><strong>7 月 12 日 · 平静</strong><span>3 条记录 · 1 篇随心日记</span></div><button class="icon-button" data-action="go-today">›</button></article>
+        <article class="memory-preview">${photo('photo-walk', '重要日')}<div><strong>7 月 7 日 · 开心</strong><span>重要的一天 · 5 条记录</span></div><button class="icon-button">›</button></article>
+        ${tabbar('calendar')}
+      </section>`;
+    }
+
+    function editorA(extraClass = '') {
+      return `<section class="screen editor-page ${extraClass}">
+        <div class="editor-top"><button data-action="go-today">‹ 今天</button><span>日记编辑</span><button class="save" data-action="save-diary">保存</button></div>
+        <span class="version-chip">版本 3 · AI 生成后已编辑</span>
+        <textarea class="editor-title" rows="2" aria-label="日记标题">慢下来以后，日子忽然有了纹理</textarea>
+        <div class="editor-date">2026 年 7 月 12 日 · 星期日</div>
+        <div class="editor-body" contenteditable="true" aria-label="日记正文">
+          <p>今天没有发生什么大事。下午给自己冲了一杯咖啡，没有打开工作，也没有急着安排下一件事。</p>
+          <div class="editor-collage">${photo('photo-coffee', '咖啡')}${photo('photo-walk', '树林')}${photo('photo-sunset', '晚霞')}</div>
+          <p class="caption">“不赶时间的时候，连光线都像慢了一点。”</p>
+          <p>傍晚走进树林，我忽然发现自己已经很久没有认真看一棵树。也许今天真正重要的，不是完成了什么，而是终于松了一口气。</p>
+        </div>
+        <nav class="editor-toolbar" aria-label="日记编辑工具"><button>H</button><button>✦</button><button>▧</button><button>☰</button><button>↶</button></nav>
+      </section>`;
+    }
+
+    function captureB() {
+      return `<section class="screen variant-b b-capture">
+        <div class="b-header"><div class="b-date">Sunday, July 12</div><div class="tiny-avatar"></div></div>
+        <div class="scrap-stage">
+          <span class="tape" style="top:4px;left:54px"></span>
+          <article class="scrap-photo one">${photo('photo-coffee', '咖啡')}<small>慢一点，也很好。</small></article>
+          <article class="scrap-photo two">${photo('photo-walk', '树林')}<small>傍晚的树影</small></article>
+          <article class="note-paper">
+            <textarea aria-label="随心记录正文" placeholder="写点什么……">下午喝了一杯咖啡，傍晚又去散了步。今天的快乐很轻，但是真的存在。</textarea>
+            <div class="stamp-row"><div class="stamp-actions"><button data-action="add-photo">▧</button><button data-action="toggle-recording">●</button></div><div class="postmark">SUÍ XĪN<br>07 · 12</div></div>
+          </article>
+          <button class="b-submit" data-action="submit">贴进今天的手账</button>
+        </div>
+      </section>`;
+    }
+
+    function todayB() {
+      return `<section class="screen variant-b b-page">
+        <header class="album-title"><h1>今天这一页</h1><span>7 月 12 日 · 平静</span></header>
+        <article class="album-hero">
+          ${photo('photo-sunset', '今日封面')}
+          <div class="album-hero-copy"><small>DAILY STORY · 3 NOTES</small><h2>日子慢下来，才看见光落在哪里</h2><p>今日随心日记已生成，可以像编辑手账一样继续调整。</p></div>
+        </article>
+        <div class="memory-strip">
+          <article class="memory-ticket">${photo('photo-coffee', '咖啡')}<strong>15:18 · 一杯咖啡</strong><span>终于给自己留了一个下午</span></article>
+          <article class="memory-ticket">${photo('photo-walk', '树林')}<strong>20:46 · 散步</strong><span>很久没有这样看一棵树</span></article>
+          <article class="memory-ticket"><div style="height:86px;display:grid;place-items:center;background:#f0e3d4;font-size:30px">♪</div><strong>一段语音</strong><span>00:18 · 已转写</span></article>
+        </div>
+        ${tabbar('today', 'b-tabbar')}
+      </section>`;
+    }
+
+    function calendarB() {
+      return `<section class="screen variant-b b-page b-calendar">
+        <header class="album-title"><h1>翻日子</h1><span>2026 · JULY</span></header>
+        <div class="calendar-card">
+          <div class="calendar-nav"><button>‹</button><strong>七月</strong><button>›</button></div>
+          <div class="week-grid"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+          <div class="days-grid">${calendarGrid()}</div>
+          ${satisfactionLegend()}
+        </div>
+        <div class="month-note">这个月已经认真留下了 8 天。七月的关键词似乎是：慢一点、晒太阳，以及重新注意身边的小事。</div>
+        <div class="memory-strip"><article class="memory-ticket">${photo('photo-sunset', '7月12日')}<strong>7 月 12 日</strong><span>平静 · 3 条记录</span></article><article class="memory-ticket">${photo('photo-walk', '7月7日')}<strong>7 月 7 日</strong><span>开心 · 重要的一天</span></article></div>
+        ${tabbar('calendar', 'b-tabbar')}
+      </section>`;
+    }
+
+    function editorB() {
+      return `<section class="screen editor-page b-editor">
+        <div class="editor-top"><button data-action="go-today">‹ 手账</button><span>编辑这一页</span><button class="save" data-action="save-diary">完成</button></div>
+        <div class="paper-sheet">
+          <span class="version-chip">第 3 版</span>
+          <textarea class="editor-title" rows="2" aria-label="日记标题">日子慢下来，才看见光落在哪里</textarea>
+          <div class="editor-date">Sunday · July 12, 2026</div>
+          <div class="editor-body" contenteditable="true">
+            <p>今天的快乐很轻。它藏在咖啡的热气里，也藏在傍晚没有目的的散步里。</p>
+            <div class="editor-collage">${photo('photo-coffee', '咖啡')}${photo('photo-walk', '树林')}${photo('photo-sunset', '晚霞')}</div>
+            <p class="caption">今天真正完成的事：让自己松了一口气。</p>
+            <p>原来没有“大事”发生的一天，也完全值得被记住。</p>
+          </div>
+        </div>
+        <nav class="editor-toolbar"><button>H</button><button>✦</button><button>▧</button><button>☰</button><button>↶</button></nav>
+      </section>`;
+    }
+
+    function captureC() {
+      return `<section class="screen variant-c c-capture">
+        <div class="c-top"><strong>随心记</strong><button data-action="go-today">今天的记录　›</button></div>
+        <div class="c-prompt"><span>不用组织语言</span><h1>先说出来，<br>剩下的慢慢整理。</h1></div>
+        <div class="voice-orbit-wrap"><div class="voice-orbit"></div><button class="voice-main ${recording ? 'recording' : ''}" data-action="toggle-recording">${recording ? '■' : '●'}</button></div>
+        <div class="c-record-status">${recording ? '正在录音 · 点击停止并转写' : '点击开始录音'}</div>
+        <div class="c-quick-row"><button class="c-quick-card" data-action="add-photo"><span>从相册</span><strong>▧ 加几张照片</strong></button><button class="c-quick-card"><span>当前心情</span><strong>平静　⌄</strong></button></div>
+        <div class="c-text-sheet"><textarea placeholder="或者，直接写下此刻……" aria-label="随心记录正文"></textarea></div>
+        <button class="c-submit" data-action="submit">保存这条随心记</button>
+      </section>`;
+    }
+
+    function todayC() {
+      return `<section class="screen variant-c c-page">
+        <header class="page-header"><div><span class="page-kicker">JUL 12 · 3 MOMENTS</span><h1 class="page-title">今天</h1></div><div class="avatar">◡</div></header>
+        <div class="c-day-state"><div class="mood-orb">☀</div><article class="c-summary"><span>今日随心日记 · 已生成</span><h3>慢下来以后，日子忽然有了纹理</h3></article></div>
+        <div class="c-timeline">
+          <article class="c-entry"><span class="c-entry-time">20:46</span><div><p>很久没有认真看一棵树。今天的安静，好像终于落到了身上。</p>${photo('photo-walk', '树林')}</div></article>
+          <article class="c-entry"><span class="c-entry-time">15:18</span><div><p>“好像终于松了一口气。”</p><div class="audio-chip">▶　00:18　已转写</div></div></article>
+          <article class="c-entry"><span class="c-entry-time">09:12</span><div><p>今天想少做一点。</p></div></article>
+        </div>
+        ${tabbar('today', 'c-tabbar')}
+      </section>`;
+    }
+
+    function calendarC() {
+      return `<section class="screen variant-c c-page c-calendar">
+        <header class="page-header"><div><span class="page-kicker">LOOK BACK</span><h1 class="page-title">日历</h1></div><button class="icon-button" style="background:#302c35;color:#ddd4df">⌕</button></header>
+        <div class="calendar-card"><div class="calendar-nav"><button>‹</button><strong>2026 年 7 月</strong><button>›</button></div><div class="week-grid"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div><div class="days-grid">${calendarGrid()}</div>${satisfactionLegend()}</div>
+        <article class="memory-preview">${photo('photo-sunset', '今日回忆')}<div><strong>7 月 12 日 · 平静</strong><span>3 个片段 · 已生成日记</span></div><button class="icon-button" data-action="go-today">›</button></article>
+        ${tabbar('calendar', 'c-tabbar')}
+      </section>`;
+    }
+
+    function editorC() {
+      return editorA('c-editor');
+    }
+
+    const renderers = {
+      A: { capture: captureA, today: todayA, calendar: calendarA, diary: editorA },
+      B: { capture: captureB, today: todayB, calendar: calendarB, diary: editorB },
+      C: { capture: captureC, today: todayC, calendar: calendarC, diary: editorC }
+    };
+
+    function syncUrl() {
+      const next = new URL(location.href);
+      next.searchParams.set('variant', variant);
+      next.searchParams.set('screen', screen);
+      history.replaceState({}, '', next);
+    }
+
+    function render() {
+      document.body.dataset.variant = variant;
+      app.innerHTML = renderers[variant][screen]();
+      document.getElementById('variant-label').textContent = `${variant} · ${variants[variant].name}`;
+      document.getElementById('variant-description').textContent = variants[variant].description;
+      document.querySelectorAll('[data-screen]').forEach(button => button.classList.toggle('active', button.dataset.screen === screen));
+      syncUrl();
+    }
+
+    function setScreen(nextScreen) {
+      screen = nextScreen;
+      render();
+    }
+
+    function cycleVariant(direction) {
+      const keys = Object.keys(variants);
+      const index = keys.indexOf(variant);
+      variant = keys[(index + direction + keys.length) % keys.length];
+      render();
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 1700);
+    }
+
+    function toggleRecording() {
+      recording = !recording;
+      if (recording) {
+        recordingStartedAt = Date.now();
+        clearInterval(recordingTimer);
+        recordingTimer = setInterval(() => {}, 1000);
+      } else {
+        clearInterval(recordingTimer);
+        showToast('录音已完成，正在本机转写');
+      }
+      render();
+    }
+
+    document.addEventListener('click', event => {
+      const sceneButton = event.target.closest('[data-screen]');
+      if (sceneButton) return setScreen(sceneButton.dataset.screen);
+      const actionButton = event.target.closest('[data-action]');
+      if (!actionButton) return;
+      const action = actionButton.dataset.action;
+      if (action === 'go-today') setScreen('today');
+      if (action === 'go-capture') setScreen('capture');
+      if (action === 'go-calendar') setScreen('calendar');
+      if (action === 'go-diary') setScreen('diary');
+      if (action === 'toggle-recording') toggleRecording();
+      if (action === 'add-photo') showToast('已打开系统相册选择器');
+      if (action === 'select-day') showToast('已选择这个记录日');
+      if (action === 'save-diary') showToast('日记已保存为新版本');
+      if (action === 'submit') {
+        showToast('已保存到今天，等待同步');
+        setTimeout(() => setScreen('today'), 450);
+      }
+    });
+
+    document.getElementById('previous-variant').addEventListener('click', () => cycleVariant(-1));
+    document.getElementById('next-variant').addEventListener('click', () => cycleVariant(1));
+    document.addEventListener('keydown', event => {
+      if (['INPUT', 'TEXTAREA'].includes(event.target.tagName) || event.target.isContentEditable) return;
+      if (event.key === 'ArrowLeft') cycleVariant(-1);
+      if (event.key === 'ArrowRight') cycleVariant(1);
+    });
+
+    render();
+  </script>
+</body>
+</html>
