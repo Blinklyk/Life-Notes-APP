@@ -1,0 +1,634 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AA0000000000000000000001 /* DayKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000001 /* DayKey.swift */; };
+		AA0000000000000000000002 /* Entry.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000002 /* Entry.swift */; };
+		AA0000000000000000000003 /* DayWorkspace.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000003 /* DayWorkspace.swift */; };
+		AA0000000000000000000004 /* EntryRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000004 /* EntryRecord.swift */; };
+		AA0000000000000000000005 /* ModelContainerFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000005 /* ModelContainerFactory.swift */; };
+		AA0000000000000000000006 /* SwiftDataDayWorkspace.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000006 /* SwiftDataDayWorkspace.swift */; };
+		AA0000000000000000000007 /* LocalUserIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000007 /* LocalUserIdentity.swift */; };
+		AA0000000000000000000008 /* AppDateFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000008 /* AppDateFormatting.swift */; };
+		AA0000000000000000000009 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000009 /* AppTheme.swift */; };
+		AA000000000000000000000A /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000000A /* AppModel.swift */; };
+		AA000000000000000000000B /* PrivacyGateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000000B /* PrivacyGateModel.swift */; };
+		AA000000000000000000000C /* PrivacyGateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000000C /* PrivacyGateView.swift */; };
+		AA000000000000000000000D /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000000D /* AppRootView.swift */; };
+		AA000000000000000000000E /* LifeNotesApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000000E /* LifeNotesApp.swift */; };
+		AA000000000000000000000F /* CaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000000F /* CaptureView.swift */; };
+		AA0000000000000000000010 /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000010 /* TodayView.swift */; };
+		AA0000000000000000000012 /* DayKeyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000012 /* DayKeyTests.swift */; };
+		AA0000000000000000000013 /* SwiftDataDayWorkspaceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000013 /* SwiftDataDayWorkspaceTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		990000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FF0000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EE0000000000000000000001;
+			remoteInfo = LifeNotes;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		BB0000000000000000000001 /* DayKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayKey.swift; sourceTree = "<group>"; };
+		BB0000000000000000000002 /* Entry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Entry.swift; sourceTree = "<group>"; };
+		BB0000000000000000000003 /* DayWorkspace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayWorkspace.swift; sourceTree = "<group>"; };
+		BB0000000000000000000004 /* EntryRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryRecord.swift; sourceTree = "<group>"; };
+		BB0000000000000000000005 /* ModelContainerFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelContainerFactory.swift; sourceTree = "<group>"; };
+		BB0000000000000000000006 /* SwiftDataDayWorkspace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataDayWorkspace.swift; sourceTree = "<group>"; };
+		BB0000000000000000000007 /* LocalUserIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalUserIdentity.swift; sourceTree = "<group>"; };
+		BB0000000000000000000008 /* AppDateFormatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDateFormatting.swift; sourceTree = "<group>"; };
+		BB0000000000000000000009 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
+		BB000000000000000000000A /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		BB000000000000000000000B /* PrivacyGateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyGateModel.swift; sourceTree = "<group>"; };
+		BB000000000000000000000C /* PrivacyGateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyGateView.swift; sourceTree = "<group>"; };
+		BB000000000000000000000D /* AppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootView.swift; sourceTree = "<group>"; };
+		BB000000000000000000000E /* LifeNotesApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LifeNotesApp.swift; sourceTree = "<group>"; };
+		BB000000000000000000000F /* CaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureView.swift; sourceTree = "<group>"; };
+		BB0000000000000000000010 /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
+		BB0000000000000000000012 /* DayKeyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayKeyTests.swift; sourceTree = "<group>"; };
+		BB0000000000000000000013 /* SwiftDataDayWorkspaceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataDayWorkspaceTests.swift; sourceTree = "<group>"; };
+		BB0000000000000000000015 /* LifeNotes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LifeNotes.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB0000000000000000000016 /* LifeNotesTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LifeNotesTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		DD0000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DD0000000000000000000004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		CC0000000000000000000000 = {
+			isa = PBXGroup;
+			children = (
+				CC0000000000000000000003 /* LifeNotes */,
+				CC0000000000000000000011 /* LifeNotesTests */,
+				CC0000000000000000000002 /* Frameworks */,
+				CC0000000000000000000001 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		CC0000000000000000000001 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				BB0000000000000000000015 /* LifeNotes.app */,
+				BB0000000000000000000016 /* LifeNotesTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CC0000000000000000000002 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		CC0000000000000000000003 /* LifeNotes */ = {
+			isa = PBXGroup;
+			children = (
+				CC0000000000000000000004 /* App */,
+				CC0000000000000000000005 /* Domain */,
+				CC0000000000000000000006 /* Modules */,
+				CC0000000000000000000008 /* Infrastructure */,
+				CC000000000000000000000B /* Features */,
+				CC000000000000000000000E /* DesignSystem */,
+				CC000000000000000000000F /* Support */,
+			);
+			path = LifeNotes;
+			sourceTree = "<group>";
+		};
+		CC0000000000000000000004 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				BB000000000000000000000E /* LifeNotesApp.swift */,
+				BB000000000000000000000A /* AppModel.swift */,
+				BB000000000000000000000D /* AppRootView.swift */,
+				BB000000000000000000000B /* PrivacyGateModel.swift */,
+				BB000000000000000000000C /* PrivacyGateView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		CC0000000000000000000005 /* Domain */ = {
+			isa = PBXGroup;
+			children = (
+				BB0000000000000000000001 /* DayKey.swift */,
+				BB0000000000000000000002 /* Entry.swift */,
+			);
+			path = Domain;
+			sourceTree = "<group>";
+		};
+		CC0000000000000000000006 /* Modules */ = {
+			isa = PBXGroup;
+			children = (
+				CC0000000000000000000007 /* DayWorkspace */,
+			);
+			path = Modules;
+			sourceTree = "<group>";
+		};
+		CC0000000000000000000007 /* DayWorkspace */ = {
+			isa = PBXGroup;
+			children = (
+				BB0000000000000000000003 /* DayWorkspace.swift */,
+			);
+			path = DayWorkspace;
+			sourceTree = "<group>";
+		};
+		CC0000000000000000000008 /* Infrastructure */ = {
+			isa = PBXGroup;
+			children = (
+				CC0000000000000000000009 /* Persistence */,
+				CC000000000000000000000A /* Identity */,
+			);
+			path = Infrastructure;
+			sourceTree = "<group>";
+		};
+		CC0000000000000000000009 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				BB0000000000000000000004 /* EntryRecord.swift */,
+				BB0000000000000000000005 /* ModelContainerFactory.swift */,
+				BB0000000000000000000006 /* SwiftDataDayWorkspace.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		CC000000000000000000000A /* Identity */ = {
+			isa = PBXGroup;
+			children = (
+				BB0000000000000000000007 /* LocalUserIdentity.swift */,
+			);
+			path = Identity;
+			sourceTree = "<group>";
+		};
+		CC000000000000000000000B /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				CC000000000000000000000C /* Capture */,
+				CC000000000000000000000D /* Today */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		CC000000000000000000000C /* Capture */ = {
+			isa = PBXGroup;
+			children = (
+				BB000000000000000000000F /* CaptureView.swift */,
+			);
+			path = Capture;
+			sourceTree = "<group>";
+		};
+		CC000000000000000000000D /* Today */ = {
+			isa = PBXGroup;
+			children = (
+				BB0000000000000000000010 /* TodayView.swift */,
+			);
+			path = Today;
+			sourceTree = "<group>";
+		};
+		CC000000000000000000000E /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				BB0000000000000000000009 /* AppTheme.swift */,
+			);
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
+		CC000000000000000000000F /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				BB0000000000000000000008 /* AppDateFormatting.swift */,
+			);
+			path = Support;
+			sourceTree = "<group>";
+		};
+		CC0000000000000000000011 /* LifeNotesTests */ = {
+			isa = PBXGroup;
+			children = (
+				BB0000000000000000000012 /* DayKeyTests.swift */,
+				BB0000000000000000000013 /* SwiftDataDayWorkspaceTests.swift */,
+			);
+			path = LifeNotesTests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		EE0000000000000000000001 /* LifeNotes */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 880000000000000000000002 /* Build configuration list for PBXNativeTarget "LifeNotes" */;
+			buildPhases = (
+				DD0000000000000000000002 /* Sources */,
+				DD0000000000000000000001 /* Frameworks */,
+				DD0000000000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LifeNotes;
+			productName = LifeNotes;
+			productReference = BB0000000000000000000015 /* LifeNotes.app */;
+			productType = "com.apple.product-type.application";
+		};
+		EE0000000000000000000002 /* LifeNotesTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 880000000000000000000003 /* Build configuration list for PBXNativeTarget "LifeNotesTests" */;
+			buildPhases = (
+				DD0000000000000000000005 /* Sources */,
+				DD0000000000000000000004 /* Frameworks */,
+				DD0000000000000000000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				990000000000000000000002 /* PBXTargetDependency */,
+			);
+			name = LifeNotesTests;
+			productName = LifeNotesTests;
+			productReference = BB0000000000000000000016 /* LifeNotesTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		FF0000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					EE0000000000000000000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					EE0000000000000000000002 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = EE0000000000000000000001;
+					};
+				};
+			};
+			buildConfigurationList = 880000000000000000000001 /* Build configuration list for PBXProject "LifeNotes" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = "zh-Hans";
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				"zh-Hans",
+				en,
+				Base,
+			);
+			mainGroup = CC0000000000000000000000;
+			productRefGroup = CC0000000000000000000001 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				EE0000000000000000000001 /* LifeNotes */,
+				EE0000000000000000000002 /* LifeNotesTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		DD0000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DD0000000000000000000006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		DD0000000000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA000000000000000000000E /* LifeNotesApp.swift in Sources */,
+				AA000000000000000000000A /* AppModel.swift in Sources */,
+				AA000000000000000000000D /* AppRootView.swift in Sources */,
+				AA000000000000000000000B /* PrivacyGateModel.swift in Sources */,
+				AA000000000000000000000C /* PrivacyGateView.swift in Sources */,
+				AA0000000000000000000001 /* DayKey.swift in Sources */,
+				AA0000000000000000000002 /* Entry.swift in Sources */,
+				AA0000000000000000000003 /* DayWorkspace.swift in Sources */,
+				AA0000000000000000000004 /* EntryRecord.swift in Sources */,
+				AA0000000000000000000005 /* ModelContainerFactory.swift in Sources */,
+				AA0000000000000000000006 /* SwiftDataDayWorkspace.swift in Sources */,
+				AA0000000000000000000007 /* LocalUserIdentity.swift in Sources */,
+				AA000000000000000000000F /* CaptureView.swift in Sources */,
+				AA0000000000000000000010 /* TodayView.swift in Sources */,
+				AA0000000000000000000009 /* AppTheme.swift in Sources */,
+				AA0000000000000000000008 /* AppDateFormatting.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DD0000000000000000000005 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA0000000000000000000012 /* DayKeyTests.swift in Sources */,
+				AA0000000000000000000013 /* SwiftDataDayWorkspaceTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		990000000000000000000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = EE0000000000000000000001 /* LifeNotes */;
+			targetProxy = 990000000000000000000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		770000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		770000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		770000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_TESTABILITY = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "随心记";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "用于解锁随心记，保护你的私人记录。";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.blinklyk.LifeNotes;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		770000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "随心记";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "用于解锁随心记，保护你的私人记录。";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.blinklyk.LifeNotes;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		770000000000000000000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_TESTABILITY = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.blinklyk.LifeNotesTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LifeNotes.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/LifeNotes";
+				TEST_TARGET_NAME = LifeNotes;
+			};
+			name = Debug;
+		};
+		770000000000000000000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.blinklyk.LifeNotesTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LifeNotes.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/LifeNotes";
+				TEST_TARGET_NAME = LifeNotes;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		880000000000000000000001 /* Build configuration list for PBXProject "LifeNotes" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				770000000000000000000001 /* Debug */,
+				770000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		880000000000000000000002 /* Build configuration list for PBXNativeTarget "LifeNotes" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				770000000000000000000003 /* Debug */,
+				770000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		880000000000000000000003 /* Build configuration list for PBXNativeTarget "LifeNotesTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				770000000000000000000005 /* Debug */,
+				770000000000000000000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = FF0000000000000000000001 /* Project object */;
+}

@@ -112,3 +112,35 @@
 - 识别到早期产品/技术文档仍包含“视频属于 MVP”等已过时内容；后续已确认初代完全不支持视频，因此新增根目录 `AGENTS.md` 明确信息优先级。
 - 新增 `docs/MACOS-START.md`，为 macOS 智能体提供阅读顺序、首个 SwiftUI 纵向闭环、非目标、建议模块与验证标准。
 - 在系统临时目录生成 `suixinji-macos-handoff.md` 作为会话级备用交接摘要；仓库内文档才是跨设备接手入口。
+
+## 2026-07-13：首个 SwiftUI 纵向闭环代码落地
+
+### 用户要求
+
+- 完整阅读根目录 `AGENTS.md` 与 `docs/MACOS-START.md` 后，在 macOS/Xcode 中实现第一个 SwiftUI 纵向闭环。
+- 闭环范围为：启动并解锁、立即记录纯文字、SwiftData 本地保存、进入今天页、重启后仍可读取。
+
+### 本次实际修改
+
+- 创建 `LifeNotes.xcodeproj`，包含 iOS 17+ 的 `LifeNotes` App target、`LifeNotesTests` 单元测试 target 和共享 scheme。
+- 按 `App`、`Features`、`Modules`、`Domain`、`Infrastructure` 分层创建单一 App target 内的 Swift 源码。
+- 新增 Face ID/设备密码隐私门；后台会取消未完成的认证，inactive 快照不渲染私人内容。
+- 新增方案 A 风格的原生 Capture 与 Today 页面，支持进程内草稿保留、空白校验、保存成功提示、时间线倒序展示、Dynamic Type、键盘避让和基础 VoiceOver 语义。
+- 新增 `DayKey`、`Entry`、`NewTextEntry` 等领域类型；记录固化本地用户 ID、创建时区和 `YYYYMMDD` 日期键。
+- 使用 SwiftData `@ModelActor` 实现文字记录保存与按记录日读取；不接入 AI、后端、同步、图片、语音或视频。
+- 新增上海时区日期边界、保存读取、用户/日期隔离、倒序与磁盘 store 重开测试。
+- 更新 `README.md`，纠正初代不支持视频并记录当前工程状态。
+
+### 当前验证
+
+- `plutil -lint LifeNotes.xcodeproj/project.pbxproj` 通过。
+- shared scheme XML 校验通过，`xcodebuild -list` 可识别两个 target 和 `LifeNotes` scheme。
+- 纯 Foundation 的 Domain/DayWorkspace Interface 已用 Swift 5.8.1 typecheck 通过。
+- 除旧编译器不认识的 SwiftData `#Predicate` 宏文件外，其余 Swift 文件语法解析通过；`git diff --check` 通过。
+
+### 风险与待办
+
+- 当前机器仍是 Xcode 14.3.1、iOS 16.4 SDK，且 CoreSimulator 与 macOS 15.4 不兼容，无法编译 iOS 17/SwiftData 或运行测试。
+- 用户需要安装并切换到 Xcode 15+，建议 Xcode 16.x，同时安装 iOS 17+ Simulator runtime；之后必须补跑 build、全部单测、Simulator 保存/重启读取和界面检查。
+- 真机运行前需要在 Signing & Capabilities 选择用户的 Personal Team，并检查 Face ID、动态字体和键盘遮挡。
+- 用户已要求将当前实现提交并推送；iOS 17 完整验证仍需在新版 Xcode 到位后补跑并另行记录。
