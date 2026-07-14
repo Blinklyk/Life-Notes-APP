@@ -3,6 +3,7 @@ import SwiftUI
 struct TodayView: View {
     @ObservedObject var appModel: AppModel
     @AccessibilityFocusState private var isTitleFocused: Bool
+    @State private var presentedPhoto: FullScreenPhotoItem?
 
     var body: some View {
         ScrollView {
@@ -36,7 +37,15 @@ struct TodayView: View {
                 } else {
                     EntryTimeline(
                         entries: appModel.entries,
-                        timeZone: appModel.todayTimeZone
+                        timeZone: appModel.todayTimeZone,
+                        photoLibrary: appModel.photoLibrary,
+                        onOpenPhoto: { photo, position in
+                            presentedPhoto = FullScreenPhotoItem(
+                                id: photo.id,
+                                relativePath: photo.originalRelativePath,
+                                accessibilityLabel: "照片 \(position) 原图"
+                            )
+                        }
                     )
                     .padding(.top, 18)
                 }
@@ -67,6 +76,12 @@ struct TodayView: View {
         .task {
             isTitleFocused = true
             await appModel.refreshToday()
+        }
+        .fullScreenCover(item: $presentedPhoto) { photo in
+            FullScreenPhotoViewer(
+                item: photo,
+                photoLibrary: appModel.photoLibrary
+            )
         }
     }
 }
@@ -123,6 +138,8 @@ private struct TodayHeader: View {
 private struct EntryTimeline: View {
     let entries: [Entry]
     let timeZone: TimeZone
+    let photoLibrary: any PhotoLibrary
+    let onOpenPhoto: (PhotoAttachment, Int) -> Void
 
     var body: some View {
         LazyVStack(spacing: 12) {
@@ -130,7 +147,9 @@ private struct EntryTimeline: View {
                 EntryTimelineRow(
                     entry: entry,
                     timeZone: timeZone,
-                    isLast: index == entries.count - 1
+                    isLast: index == entries.count - 1,
+                    photoLibrary: photoLibrary,
+                    onOpenPhoto: onOpenPhoto
                 )
             }
         }
@@ -141,6 +160,8 @@ private struct EntryTimelineRow: View {
     let entry: Entry
     let timeZone: TimeZone
     let isLast: Bool
+    let photoLibrary: any PhotoLibrary
+    let onOpenPhoto: (PhotoAttachment, Int) -> Void
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -167,12 +188,29 @@ private struct EntryTimelineRow: View {
                 Text(AppDateFormatting.entryTime(entry.createdAt, timeZone: timeZone))
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(AppTheme.sage)
+                    .accessibilityLabel(
+                        AppDateFormatting.accessibleEntryTime(
+                            entry.createdAt,
+                            timeZone: timeZone
+                        )
+                    )
 
-                Text(entry.text)
-                    .font(.body)
-                    .foregroundStyle(AppTheme.ink)
-                    .lineSpacing(5)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                if !entry.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text(entry.text)
+                        .font(.body)
+                        .foregroundStyle(AppTheme.ink)
+                        .lineSpacing(5)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                ForEach(Array(entry.photos.enumerated()), id: \.element.id) { index, photo in
+                    EntryPhotoView(
+                        photo: photo,
+                        position: index + 1,
+                        photoLibrary: photoLibrary,
+                        onOpen: { onOpenPhoto(photo, index + 1) }
+                    )
+                }
             }
             .padding(16)
             .background(AppTheme.surface, in: RoundedRectangle(cornerRadius: 8))
@@ -182,10 +220,47 @@ private struct EntryTimelineRow: View {
             }
             .shadow(color: AppTheme.ink.opacity(0.04), radius: 10, y: 4)
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(
-            "\(AppDateFormatting.accessibleEntryTime(entry.createdAt, timeZone: timeZone))，\(entry.text)"
-        )
+        .accessibilityElement(children: .contain)
+    }
+}
+
+private struct EntryPhotoView: View {
+    let photo: PhotoAttachment
+    let position: Int
+    let photoLibrary: any PhotoLibrary
+    let onOpen: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Button(action: onOpen) {
+                PhotoAssetView(
+                    photoLibrary: photoLibrary,
+                    relativePath: photo.thumbnailRelativePath,
+                    displayMode: .fit,
+                    maxPixelSize: 1_200,
+                    accessibilityLabel: "照片 \(position)"
+                )
+                .aspectRatio(photoAspectRatio, contentMode: .fit)
+                .frame(maxWidth: .infinity, maxHeight: 360)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("打开原图")
+
+            if !photo.annotationText.isEmpty {
+                Text(photo.annotationText)
+                    .font(.callout)
+                    .foregroundStyle(AppTheme.mutedInk)
+                    .lineSpacing(4)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityLabel("照片 \(position) 批注：\(photo.annotationText)")
+            }
+        }
+    }
+
+    private var photoAspectRatio: CGFloat {
+        CGFloat(max(photo.pixelWidth, 1)) / CGFloat(max(photo.pixelHeight, 1))
     }
 }
 

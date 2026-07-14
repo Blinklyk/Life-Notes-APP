@@ -25,11 +25,23 @@ Life Notes App
 
 ## 当前状态
 
-项目已创建 iOS 17+ 原生 SwiftUI 工程 [LifeNotes.xcodeproj](LifeNotes.xcodeproj)，当前实现首个纵向闭环：
+项目已创建 iOS 17+ 原生 SwiftUI 工程 [LifeNotes.xcodeproj](LifeNotes.xcodeproj)，当前已实现两个本地纵向闭环：
 
 `启动并解锁 → 立即记录纯文字 → SwiftData 本地保存 → 进入今天页 → 重启后仍可读取`
 
-工程包含 `LifeNotes` App target 与 `LifeNotesTests` 单元测试 target。开发环境至少需要 Xcode 15，建议使用兼容当前 macOS 的 Xcode 16.x，并安装 iOS 17+ Simulator runtime。
+`从系统相册有序选择图片 → 逐图填写可选批注 → 保存图文或纯图记录 → 今天页查看缩略图与原图 → 重启后仍可读取`
+
+图片闭环包含以下约束：
+
+- 每条记录最多 20 张图片，只读取系统相册图片，不提供视频或 App 内拍照。
+- 原图保存在 App 私有目录，另生成最长边 1200 像素的 JPEG 缩略图；列表和全屏查看均使用降采样，避免直接解码超大原图。
+- 单图限制 100 MiB、1 亿像素，导入前先检查文件元数据；媒体路径、符号链接与孤儿清理均有边界校验。
+- 未保存图文草稿会写入受文件保护的 JSON；切到后台时立即 flush，旧草稿自动迁移稳定 ID，已提交草稿不会在重启后重复恢复。
+- SwiftData 保存图片元数据和逐图批注，并可从旧版纯文字 store 自动扩展 schema。
+
+工程包含 `LifeNotes` App target 与 `LifeNotesTests` 单元测试 target。当前在 Xcode 26.6、Swift 6 严格并发及 warnings-as-errors 下通过 47 项单元与集成测试。开发环境最低需要 Xcode 15，并安装 iOS 17+ Simulator runtime。
+
+下一项实现为语音录制、系统转写、可编辑转写文本和原始录音保留。
 
 准备在 macOS 上继续开发时，请从 [docs/MACOS-START.md](docs/MACOS-START.md) 开始，并先阅读根目录 [AGENTS.md](AGENTS.md)。
 

@@ -144,3 +144,31 @@
 - 用户需要安装并切换到 Xcode 15+，建议 Xcode 16.x，同时安装 iOS 17+ Simulator runtime；之后必须补跑 build、全部单测、Simulator 保存/重启读取和界面检查。
 - 真机运行前需要在 Signing & Capabilities 选择用户的 Personal Team，并检查 Face ID、动态字体和键盘遮挡。
 - 用户已要求将当前实现提交并推送；iOS 17 完整验证仍需在新版 Xcode 到位后补跑并另行记录。
+
+## 2026-07-15：图片选择与逐图批注闭环
+
+### 用户要求
+
+- 继续实现初代全部能力，并先完成图片选择及逐图批注。
+- 每完成一项都更新 `README.md` 和项目 memory，并创建一次中文 Conventional Commit。
+
+### 本次实际修改
+
+- 使用 `PhotosPicker` 有序选择最多 20 张图片，仅接收图片，不提供视频或 App 内拍照。
+- 支持纯图或图文记录、逐图可选文字批注、移除、导入失败状态和未保存草稿恢复。
+- 使用文件表示导入相册资源，在整图进入内存前检查 100 MiB 与 1 亿像素上限；保存原图并生成最长边 1200 像素的 JPEG 缩略图。
+- Today 时间线展示缩略图与批注；点击后使用 4096 像素降采样全屏查看，支持缩放、拖动和双击复位。
+- 新增 `PhotoAttachmentRecord`、稳定 `sourceDraftID`、跨用户引用保护、安全删除与一小时阈值孤儿回收；旧文字 store 和旧草稿 JSON 可自动迁移。
+- 草稿在切入 inactive/background 时立即 flush；草稿读取失败时禁止覆盖、清除和媒体回收，并将立即记录页置为明确故障态。
+
+### 验证
+
+- `plutil -lint LifeNotes.xcodeproj/project.pbxproj` 与 `git diff --check` 通过。
+- Xcode 26.6、Apple Swift 6.3.3 下以 `SWIFT_VERSION=6`、`SWIFT_STRICT_CONCURRENCY=complete`、`SWIFT_TREAT_WARNINGS_AS_ERRORS=YES` 完成 `build-for-testing`。
+- 临时 iPhone 17 Pro / iOS 26.5 Simulator 执行 47 项单元与集成测试，47 项通过、0 项失败；结果包为 `/tmp/LifeNotesPhotoTestsFinal6.xcresult`。
+- 原 `58ABABC0-1722-47F0-99BB-1B2311C24C60` Simulator 的 per-device 服务异常，曾导致 `addmedia`、安装和 launch worker 长时间等待；后续验证应使用新建临时设备。
+
+### 风险与待办
+
+- macOS 当前锁屏，尚未补完 PhotosPicker、多图批注、全屏缩放、强退恢复、Dynamic Type 与 VoiceOver 的人工 UI 检查；代码与自动化测试已通过，解锁后继续补验。
+- 下一项进入语音录制、系统转写、可编辑转写与原始录音保留。

@@ -25,6 +25,16 @@
 		AA0000000000000000000010 /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000010 /* TodayView.swift */; };
 		AA0000000000000000000012 /* DayKeyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000012 /* DayKeyTests.swift */; };
 		AA0000000000000000000013 /* SwiftDataDayWorkspaceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000013 /* SwiftDataDayWorkspaceTests.swift */; };
+		AA1000000000000000000001 /* PhotoLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000001 /* PhotoLibrary.swift */; };
+		AA1000000000000000000002 /* PhotoAttachmentRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000002 /* PhotoAttachmentRecord.swift */; };
+		AA1000000000000000000003 /* FilePhotoLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000003 /* FilePhotoLibrary.swift */; };
+		AA1000000000000000000004 /* PhotoAssetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000004 /* PhotoAssetView.swift */; };
+		AA1000000000000000000005 /* FilePhotoLibraryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000005 /* FilePhotoLibraryTests.swift */; };
+		AA1000000000000000000006 /* CaptureDraftStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000006 /* CaptureDraftStore.swift */; };
+		AA1000000000000000000007 /* FileCaptureDraftStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000007 /* FileCaptureDraftStore.swift */; };
+		AA1000000000000000000008 /* FileCaptureDraftStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000008 /* FileCaptureDraftStoreTests.swift */; };
+		AA1000000000000000000009 /* AppModelPhotoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000009 /* AppModelPhotoTests.swift */; };
+		AA100000000000000000000A /* PhotoPersistenceIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100000000000000000000A /* PhotoPersistenceIntegrationTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -58,6 +68,16 @@
 		BB0000000000000000000013 /* SwiftDataDayWorkspaceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataDayWorkspaceTests.swift; sourceTree = "<group>"; };
 		BB0000000000000000000015 /* LifeNotes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LifeNotes.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB0000000000000000000016 /* LifeNotesTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LifeNotesTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB1000000000000000000001 /* PhotoLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoLibrary.swift; sourceTree = "<group>"; };
+		BB1000000000000000000002 /* PhotoAttachmentRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoAttachmentRecord.swift; sourceTree = "<group>"; };
+		BB1000000000000000000003 /* FilePhotoLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilePhotoLibrary.swift; sourceTree = "<group>"; };
+		BB1000000000000000000004 /* PhotoAssetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoAssetView.swift; sourceTree = "<group>"; };
+		BB1000000000000000000005 /* FilePhotoLibraryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilePhotoLibraryTests.swift; sourceTree = "<group>"; };
+		BB1000000000000000000006 /* CaptureDraftStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureDraftStore.swift; sourceTree = "<group>"; };
+		BB1000000000000000000007 /* FileCaptureDraftStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileCaptureDraftStore.swift; sourceTree = "<group>"; };
+		BB1000000000000000000008 /* FileCaptureDraftStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileCaptureDraftStoreTests.swift; sourceTree = "<group>"; };
+		BB1000000000000000000009 /* AppModelPhotoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModelPhotoTests.swift; sourceTree = "<group>"; };
+		BB100000000000000000000A /* PhotoPersistenceIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoPersistenceIntegrationTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -143,6 +163,8 @@
 			isa = PBXGroup;
 			children = (
 				CC0000000000000000000007 /* DayWorkspace */,
+				CC1000000000000000000001 /* MediaLibrary */,
+				CC1000000000000000000004 /* CaptureDraft */,
 			);
 			path = Modules;
 			sourceTree = "<group>";
@@ -160,6 +182,8 @@
 			children = (
 				CC0000000000000000000009 /* Persistence */,
 				CC000000000000000000000A /* Identity */,
+				CC1000000000000000000002 /* Media */,
+				CC1000000000000000000005 /* Drafts */,
 			);
 			path = Infrastructure;
 			sourceTree = "<group>";
@@ -168,6 +192,7 @@
 			isa = PBXGroup;
 			children = (
 				BB0000000000000000000004 /* EntryRecord.swift */,
+				BB1000000000000000000002 /* PhotoAttachmentRecord.swift */,
 				BB0000000000000000000005 /* ModelContainerFactory.swift */,
 				BB0000000000000000000006 /* SwiftDataDayWorkspace.swift */,
 			);
@@ -187,6 +212,7 @@
 			children = (
 				CC000000000000000000000C /* Capture */,
 				CC000000000000000000000D /* Today */,
+				CC1000000000000000000003 /* Shared */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -228,8 +254,52 @@
 			children = (
 				BB0000000000000000000012 /* DayKeyTests.swift */,
 				BB0000000000000000000013 /* SwiftDataDayWorkspaceTests.swift */,
+				BB1000000000000000000005 /* FilePhotoLibraryTests.swift */,
+				BB1000000000000000000008 /* FileCaptureDraftStoreTests.swift */,
+				BB1000000000000000000009 /* AppModelPhotoTests.swift */,
+				BB100000000000000000000A /* PhotoPersistenceIntegrationTests.swift */,
 			);
 			path = LifeNotesTests;
+			sourceTree = "<group>";
+		};
+		CC1000000000000000000001 /* MediaLibrary */ = {
+			isa = PBXGroup;
+			children = (
+				BB1000000000000000000001 /* PhotoLibrary.swift */,
+			);
+			path = MediaLibrary;
+			sourceTree = "<group>";
+		};
+		CC1000000000000000000002 /* Media */ = {
+			isa = PBXGroup;
+			children = (
+				BB1000000000000000000003 /* FilePhotoLibrary.swift */,
+			);
+			path = Media;
+			sourceTree = "<group>";
+		};
+		CC1000000000000000000003 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				BB1000000000000000000004 /* PhotoAssetView.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		CC1000000000000000000004 /* CaptureDraft */ = {
+			isa = PBXGroup;
+			children = (
+				BB1000000000000000000006 /* CaptureDraftStore.swift */,
+			);
+			path = CaptureDraft;
+			sourceTree = "<group>";
+		};
+		CC1000000000000000000005 /* Drafts */ = {
+			isa = PBXGroup;
+			children = (
+				BB1000000000000000000007 /* FileCaptureDraftStore.swift */,
+			);
+			path = Drafts;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -339,12 +409,18 @@
 				AA0000000000000000000001 /* DayKey.swift in Sources */,
 				AA0000000000000000000002 /* Entry.swift in Sources */,
 				AA0000000000000000000003 /* DayWorkspace.swift in Sources */,
+				AA1000000000000000000001 /* PhotoLibrary.swift in Sources */,
+				AA1000000000000000000006 /* CaptureDraftStore.swift in Sources */,
 				AA0000000000000000000004 /* EntryRecord.swift in Sources */,
+				AA1000000000000000000002 /* PhotoAttachmentRecord.swift in Sources */,
 				AA0000000000000000000005 /* ModelContainerFactory.swift in Sources */,
 				AA0000000000000000000006 /* SwiftDataDayWorkspace.swift in Sources */,
 				AA0000000000000000000007 /* LocalUserIdentity.swift in Sources */,
+				AA1000000000000000000003 /* FilePhotoLibrary.swift in Sources */,
+				AA1000000000000000000007 /* FileCaptureDraftStore.swift in Sources */,
 				AA000000000000000000000F /* CaptureView.swift in Sources */,
 				AA0000000000000000000010 /* TodayView.swift in Sources */,
+				AA1000000000000000000004 /* PhotoAssetView.swift in Sources */,
 				AA0000000000000000000009 /* AppTheme.swift in Sources */,
 				AA0000000000000000000008 /* AppDateFormatting.swift in Sources */,
 			);
@@ -356,6 +432,10 @@
 			files = (
 				AA0000000000000000000012 /* DayKeyTests.swift in Sources */,
 				AA0000000000000000000013 /* SwiftDataDayWorkspaceTests.swift in Sources */,
+				AA1000000000000000000005 /* FilePhotoLibraryTests.swift in Sources */,
+				AA1000000000000000000008 /* FileCaptureDraftStoreTests.swift in Sources */,
+				AA1000000000000000000009 /* AppModelPhotoTests.swift in Sources */,
+				AA100000000000000000000A /* PhotoPersistenceIntegrationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -7,7 +7,10 @@ enum ModelContainerFactory {
         configurationName: String? = nil,
         storeURL: URL? = nil
     ) throws -> ModelContainer {
-        let schema = Schema([EntryRecord.self])
+        let schema = Schema([
+            EntryRecord.self,
+            PhotoAttachmentRecord.self
+        ])
         let configuration: ModelConfiguration
 
         if let storeURL {

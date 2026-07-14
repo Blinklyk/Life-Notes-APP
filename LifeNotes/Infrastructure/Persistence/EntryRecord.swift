@@ -16,6 +16,7 @@ enum PersistenceMappingError: LocalizedError {
 final class EntryRecord {
     @Attribute(.unique) var id: UUID
     var userID: UUID
+    var sourceDraftID: UUID? = nil
     var dayKeyRawValue: Int
     var createdAt: Date
     var updatedAt: Date
@@ -25,6 +26,7 @@ final class EntryRecord {
     init(
         id: UUID,
         userID: UUID,
+        sourceDraftID: UUID? = nil,
         dayKeyRawValue: Int,
         createdAt: Date,
         updatedAt: Date,
@@ -33,6 +35,7 @@ final class EntryRecord {
     ) {
         self.id = id
         self.userID = userID
+        self.sourceDraftID = sourceDraftID
         self.dayKeyRawValue = dayKeyRawValue
         self.createdAt = createdAt
         self.updatedAt = updatedAt
@@ -40,7 +43,7 @@ final class EntryRecord {
         self.text = text
     }
 
-    func domainEntry() throws -> Entry {
+    func domainEntry(photos: [PhotoAttachment]) throws -> Entry {
         guard let dayKey = DayKey(storageValue: dayKeyRawValue) else {
             throw PersistenceMappingError.invalidDayKey(dayKeyRawValue)
         }
@@ -48,11 +51,13 @@ final class EntryRecord {
         return Entry(
             id: id,
             userID: userID,
+            sourceDraftID: sourceDraftID,
             dayKey: dayKey,
             createdAt: createdAt,
             updatedAt: updatedAt,
             creationTimeZoneIdentifier: creationTimeZoneIdentifier,
-            text: text
+            text: text,
+            photos: photos
         )
     }
 }
