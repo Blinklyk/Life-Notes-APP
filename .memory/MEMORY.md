@@ -172,3 +172,35 @@
 
 - macOS 当前锁屏，尚未补完 PhotosPicker、多图批注、全屏缩放、强退恢复、Dynamic Type 与 VoiceOver 的人工 UI 检查；代码与自动化测试已通过，解锁后继续补验。
 - 下一项进入语音录制、系统转写、可编辑转写与原始录音保留。
+
+## 2026-07-15：语音录制、转写与逐图语音批注闭环
+
+### 用户要求
+
+- 继续实现初代全部功能，本阶段完成图片记录之后的语音录制、转写和原始录音保留。
+- 每完成一项更新 `README.md` 和项目 memory，并创建一次中文 Conventional Commit。
+
+### 本次实际修改
+
+- 新增全局语音与逐图语音批注；每条记录最多一段全局语音，每张图片最多一段语音，同时只允许一个录音或转写任务。
+- 使用 `AVAudioRecorder` 录制最长 60 秒的 M4A，支持暂停、继续、停止、试听、后台落盘、系统中断、耳机路由断开和 media services reset。
+- 使用 Speech framework 优先设备内识别，不可用时由 Apple 系统能力联网重试；麦克风或语音识别权限拒绝、转写失败均不阻断原音保存。
+- 转写可编辑并记录设备内、Apple 网络或手动来源；原音默认保留，也可在转写非空时主动选择仅保留文字。
+- Today 按全局语音和对应照片语音展示，支持播放、重试转写和编辑；失配照片的旧数据仍明确显示，不会隐藏。
+- 新增 `VoiceAttachmentRecord`、受保护音频文件库、语音草稿恢复、旧草稿兼容、路径/符号链接/大小/时长校验和孤儿回收。
+- 删除语音或含语音的照片时先持久化去引用，再清理文件；异常重复语音草稿进入保护状态，不再静默丢弃或误删原音。
+- 草稿提交使用确定性记录 ID，两个 SwiftData context 并发提交同一 `(userID, sourceDraftID)` 时保持单条记录。
+- 补齐 VoiceOver 录音状态与结束播报、44pt 点击区域、忙碌态禁用及转写中编辑竞态保护。
+
+### 验证
+
+- `plutil -lint LifeNotes.xcodeproj/project.pbxproj`、scheme XML、全量 Swift parse 与 `git diff --check` 通过。
+- Xcode 26.6、Apple Swift 6.3.3 下以 `SWIFT_VERSION=6`、`SWIFT_STRICT_CONCURRENCY=complete`、`SWIFT_TREAT_WARNINGS_AS_ERRORS=YES` 完成 `build-for-testing`。
+- iPhone 17 Pro Max / iOS 26.5 Simulator 执行 79 项单元与集成测试，79 项通过、0 项失败、0 项跳过；结果包为 `/tmp/LifeNotesVoiceFinalTests3.xcresult`。
+- 两个 SwiftData context 并发提交同一草稿的测试额外重复 20 次，全部通过。
+
+### 风险与待办
+
+- 自动化已覆盖权限拒绝、转写失败、原音/仅转写、逐图语音、后台恢复、删除顺序、文件安全、迁移和并发幂等。
+- Simulator CLI 当前不提供 biometric 子命令，尚未补完真实麦克风、系统权限弹窗、Face ID 后语音页面、Dynamic Type 与 VoiceOver 的人工 UI 检查；真机验收时继续补验。
+- 下一阶段先实现每日感受与重要日的数据和编辑，再实现月历与五瓣花。

@@ -4,21 +4,25 @@ struct CaptureDraftSnapshot: Codable, Equatable, Sendable {
     let id: UUID
     let text: String
     let photos: [CaptureDraftPhotoSnapshot]
+    let voices: [CaptureDraftVoiceSnapshot]
 
     init(
         id: UUID = UUID(),
         text: String,
-        photos: [CaptureDraftPhotoSnapshot]
+        photos: [CaptureDraftPhotoSnapshot],
+        voices: [CaptureDraftVoiceSnapshot] = []
     ) {
         self.id = id
         self.text = text
         self.photos = photos
+        self.voices = voices
     }
 
     private enum CodingKeys: String, CodingKey {
         case id
         case text
         case photos
+        case voices
     }
 
     init(from decoder: Decoder) throws {
@@ -26,6 +30,51 @@ struct CaptureDraftSnapshot: Codable, Equatable, Sendable {
         id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
         text = try container.decode(String.self, forKey: .text)
         photos = try container.decode([CaptureDraftPhotoSnapshot].self, forKey: .photos)
+        voices = try container.decodeIfPresent(
+            [CaptureDraftVoiceSnapshot].self,
+            forKey: .voices
+        ) ?? []
+    }
+}
+
+struct CaptureDraftVoiceSnapshot: Codable, Equatable, Sendable {
+    enum CaptureState: String, Codable, Equatable, Sendable {
+        case recording
+        case paused
+        case ready
+        case failed
+    }
+
+    let id: UUID
+    let targetPhotoID: UUID?
+    let captureState: CaptureState
+    let keepOriginalAudio: Bool
+    let transcriptText: String
+    let transcriptionStatus: VoiceTranscriptionStatus
+    let transcriptionSource: VoiceTranscriptionSource?
+    let sourceLocaleIdentifier: String
+    let isTranscriptUserEdited: Bool
+
+    init(
+        id: UUID,
+        targetPhotoID: UUID? = nil,
+        captureState: CaptureState,
+        keepOriginalAudio: Bool = true,
+        transcriptText: String = "",
+        transcriptionStatus: VoiceTranscriptionStatus = .notRequested,
+        transcriptionSource: VoiceTranscriptionSource? = nil,
+        sourceLocaleIdentifier: String = "",
+        isTranscriptUserEdited: Bool = false
+    ) {
+        self.id = id
+        self.targetPhotoID = targetPhotoID
+        self.captureState = captureState
+        self.keepOriginalAudio = keepOriginalAudio
+        self.transcriptText = transcriptText
+        self.transcriptionStatus = transcriptionStatus
+        self.transcriptionSource = transcriptionSource
+        self.sourceLocaleIdentifier = sourceLocaleIdentifier
+        self.isTranscriptUserEdited = isTranscriptUserEdited
     }
 }
 

@@ -153,6 +153,255 @@ final class SwiftDataDayWorkspaceTests: XCTestCase {
         XCTAssertTrue(reloaded.photos.allSatisfy { $0.entryID == reloaded.id })
     }
 
+    func testVoiceOnlyEntryPreservesOriginalAudioAndFailedTranscript() async throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let workspace = SwiftDataDayWorkspace(modelContainer: container)
+        let shanghai = try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+        let voiceID = UUID(uuidString: "A16A7A0F-8CD8-47F6-A63E-226149B65E6A")!
+        let draft = try NewEntry(
+            text: " \n ",
+            voices: [
+                makeVoice(
+                    id: voiceID,
+                    originalRelativePath: "Audio/\(voiceID.uuidString)/original.m4a",
+                    transcriptText: "",
+                    transcriptionStatus: .failed,
+                    sourceLocaleIdentifier: "zh-CN"
+                )
+            ]
+        )
+
+        let saved = try await workspace.create(
+            draft,
+            userID: userID,
+            context: RecordingContext(
+                instant: try instant("2026-07-13T05:30:00Z"),
+                timeZone: shanghai
+            )
+        )
+        let entries = try await workspace.entries(for: saved.dayKey, userID: userID)
+        let reloadedVoice = try XCTUnwrap(entries.first?.voices.first)
+
+        XCTAssertEqual(saved.text, "")
+        XCTAssertEqual(saved.voices.count, 1)
+        XCTAssertEqual(reloadedVoice.id, voiceID)
+        XCTAssertEqual(reloadedVoice.entryID, saved.id)
+        XCTAssertEqual(reloadedVoice.sortIndex, 0)
+        XCTAssertEqual(reloadedVoice.durationMilliseconds, 12_345)
+        XCTAssertEqual(reloadedVoice.contentTypeIdentifier, "public.mpeg-4-audio")
+        XCTAssertEqual(reloadedVoice.byteCount, 4_096)
+        XCTAssertEqual(
+            reloadedVoice.originalRelativePath,
+            "Audio/\(voiceID.uuidString)/original.m4a"
+        )
+        XCTAssertEqual(reloadedVoice.transcriptionStatus, .failed)
+        XCTAssertNil(reloadedVoice.transcriptionSource)
+        XCTAssertTrue(reloadedVoice.transcriptText.isEmpty)
+        XCTAssertFalse(reloadedVoice.isTranscriptUserEdited)
+        XCTAssertEqual(reloadedVoice.sourceLocaleIdentifier, "zh-CN")
+    }
+
+    func testVoicesPreserveOrderPhotoTargetAndTranscriptOnlyState() async throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let workspace = SwiftDataDayWorkspace(modelContainer: container)
+        let shanghai = try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+        let photoID = UUID(uuidString: "6EC6E769-0C65-464A-9866-6FEE00A2F41D")!
+        let transcriptOnlyVoiceID = UUID(uuidString: "74BF937F-B3BC-4F30-BF93-7E9C689AE50B")!
+        let retainedVoiceID = UUID(uuidString: "C85B77CB-52EF-4F42-9BB7-3478BD919585")!
+        let draft = try NewEntry(
+            text: "一张照片和两段语音",
+            photos: [
+                makePhoto(
+                    id: photoID,
+                    originalRelativePath: "original/voice-target.heic",
+                    thumbnailRelativePath: "thumbnail/voice-target.jpg"
+                )
+            ],
+            voices: [
+                makeVoice(
+                    id: transcriptOnlyVoiceID,
+                    targetPhotoID: photoID,
+                    originalRelativePath: nil,
+                    transcriptText: "  照片里的风很大。  ",
+                    transcriptionStatus: .completed,
+                    transcriptionSource: .manual,
+                    isTranscriptUserEdited: true,
+                    sourceLocaleIdentifier: "zh-Hans-CN"
+                ),
+                makeVoice(
+                    id: retainedVoiceID,
+                    originalRelativePath: "Audio/\(retainedVoiceID.uuidString)/original.m4a",
+                    transcriptText: "稍后继续转写",
+                    transcriptionStatus: .pending
+                )
+            ]
+        )
+
+        let saved = try await workspace.create(
+            draft,
+            userID: userID,
+            context: RecordingContext(
+                instant: try instant("2026-07-13T06:00:00Z"),
+                timeZone: shanghai
+            )
+        )
+        let reloadedEntries = try await workspace.entries(
+            for: saved.dayKey,
+            userID: userID
+        )
+        let reloaded = try XCTUnwrap(reloadedEntries.first)
+
+        XCTAssertEqual(reloaded.voices.map(\.id), [transcriptOnlyVoiceID, retainedVoiceID])
+        XCTAssertEqual(reloaded.voices.map(\.sortIndex), [0, 1])
+        XCTAssertEqual(reloaded.voices.first?.targetPhotoID, photoID)
+        XCTAssertNil(reloaded.voices.first?.originalRelativePath)
+        XCTAssertNil(reloaded.voices.first?.contentTypeIdentifier)
+        XCTAssertEqual(reloaded.voices.first?.byteCount, 0)
+        XCTAssertEqual(reloaded.voices.first?.transcriptText, "照片里的风很大。")
+        XCTAssertEqual(reloaded.voices.first?.transcriptionStatus, .completed)
+        XCTAssertEqual(reloaded.voices.first?.transcriptionSource, .manual)
+        XCTAssertTrue(reloaded.voices.first?.isTranscriptUserEdited == true)
+        XCTAssertEqual(reloaded.voices.first?.sourceLocaleIdentifier, "zh-Hans-CN")
+        XCTAssertNil(reloaded.voices.last?.targetPhotoID)
+        XCTAssertEqual(reloaded.voices.last?.transcriptionStatus, .pending)
+    }
+
+    func testVoiceValidationRejectsInvalidDurationAndIncompleteContent() throws {
+        XCTAssertThrowsError(
+            try NewEntry(
+                text: "",
+                voices: [
+                    NewVoiceAttachment(
+                        durationMilliseconds: 0,
+                        transcriptText: "有文字",
+                        transcriptionStatus: .completed
+                    )
+                ]
+            )
+        ) { error in
+            XCTAssertEqual(error as? EntryValidationError, .invalidVoiceDuration)
+        }
+
+        XCTAssertThrowsError(
+            try NewEntry(
+                text: "",
+                voices: [NewVoiceAttachment(durationMilliseconds: 1_000)]
+            )
+        ) { error in
+            XCTAssertEqual(
+                error as? EntryValidationError,
+                .transcriptOnlyVoiceRequiresTranscript
+            )
+        }
+
+        XCTAssertThrowsError(
+            try NewEntry(
+                text: "",
+                voices: [
+                    NewVoiceAttachment(
+                        durationMilliseconds: 1_000,
+                        originalRelativePath: "Audio/incomplete/original.m4a"
+                    )
+                ]
+            )
+        ) { error in
+            XCTAssertEqual(error as? EntryValidationError, .retainedVoiceRequiresMetadata)
+        }
+    }
+
+    func testCreateIsIdempotentForSameUsersSourceDraftID() async throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let workspace = SwiftDataDayWorkspace(modelContainer: container)
+        let shanghai = try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+        let sourceDraftID = UUID(uuidString: "28859942-CE1A-464A-AB09-585BC344A712")!
+        let firstVoiceID = UUID(uuidString: "05341C3C-D763-45EA-B4EE-3EA46F1CBB07")!
+        let context = RecordingContext(
+            instant: try instant("2026-07-13T07:00:00Z"),
+            timeZone: shanghai
+        )
+
+        let first = try await workspace.create(
+            NewEntry(
+                sourceDraftID: sourceDraftID,
+                text: "第一次提交",
+                voices: [
+                    makeVoice(
+                        id: firstVoiceID,
+                        originalRelativePath: "Audio/\(firstVoiceID.uuidString)/original.m4a",
+                        transcriptText: "第一次的语音",
+                        transcriptionStatus: .completed
+                    )
+                ]
+            ),
+            userID: userID,
+            context: context
+        )
+        let duplicateAttempt = try await workspace.create(
+            NewEntry(
+                sourceDraftID: sourceDraftID,
+                text: "不应覆盖第一次提交",
+                voices: [
+                    makeVoice(
+                        originalRelativePath: nil,
+                        transcriptText: "不应新增的语音",
+                        transcriptionStatus: .completed
+                    )
+                ]
+            ),
+            userID: userID,
+            context: context
+        )
+        let entries = try await workspace.entries(for: first.dayKey, userID: userID)
+
+        XCTAssertEqual(duplicateAttempt, first)
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(entries.first?.text, "第一次提交")
+        XCTAssertEqual(entries.first?.voices.map(\.id), [firstVoiceID])
+
+        let otherUserEntry = try await workspace.create(
+            NewEntry(sourceDraftID: sourceDraftID, text: "其他用户可以使用相同草稿 ID"),
+            userID: UUID(uuidString: "12FA60E8-F57C-471C-AC0E-07BC246C0CE5")!,
+            context: context
+        )
+        XCTAssertNotEqual(otherUserEntry.id, first.id)
+    }
+
+    func testConcurrentWorkspacesCreateSourceDraftOnlyOnce() async throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let firstWorkspace = SwiftDataDayWorkspace(modelContainer: container)
+        let secondWorkspace = SwiftDataDayWorkspace(modelContainer: container)
+        let shanghai = try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+        let requestedUserID = userID
+        let sourceDraftID = UUID()
+        let draft = try NewEntry(
+            sourceDraftID: sourceDraftID,
+            text: "两个 context 同时提交"
+        )
+        let context = RecordingContext(
+            instant: try instant("2026-07-13T07:30:00Z"),
+            timeZone: shanghai
+        )
+
+        async let first = firstWorkspace.create(
+            draft,
+            userID: requestedUserID,
+            context: context
+        )
+        async let second = secondWorkspace.create(
+            draft,
+            userID: requestedUserID,
+            context: context
+        )
+        let (firstEntry, secondEntry) = try await (first, second)
+        let entries = try await firstWorkspace.entries(
+            for: firstEntry.dayKey,
+            userID: requestedUserID
+        )
+
+        XCTAssertEqual(firstEntry.id, secondEntry.id)
+        XCTAssertEqual(entries.map(\.id), [firstEntry.id])
+    }
+
     func testEntriesRemainIsolatedAndAreReadNewestFirst() async throws {
         let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
         let workspace = SwiftDataDayWorkspace(modelContainer: container)
@@ -271,6 +520,154 @@ final class SwiftDataDayWorkspaceTests: XCTestCase {
         XCTAssertEqual(allPhotoIDs, [firstPhotoID, secondPhotoID, otherUsersPhotoID])
     }
 
+    func testRetainedVoiceIDsExcludeTranscriptOnlyAndRespectUsers() async throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let workspace = SwiftDataDayWorkspace(modelContainer: container)
+        let shanghai = try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+        let retainedVoiceID = UUID(uuidString: "1ACD882B-CE25-4E55-91F6-45617A269644")!
+        let transcriptOnlyVoiceID = UUID(uuidString: "1666E78A-0A75-4640-BA02-D5547BC2B9CD")!
+        let otherUsersVoiceID = UUID(uuidString: "6544EFC3-50F2-4109-AD6F-EE73537BD3BE")!
+        let otherUserID = UUID(uuidString: "B8D5F210-9F2D-4B39-AAD8-CF28AFD3472F")!
+        let context = RecordingContext(
+            instant: try instant("2026-07-13T08:00:00Z"),
+            timeZone: shanghai
+        )
+
+        _ = try await workspace.create(
+            NewEntry(
+                text: "当前用户语音",
+                voices: [
+                    makeVoice(
+                        id: retainedVoiceID,
+                        originalRelativePath: "Audio/\(retainedVoiceID.uuidString)/original.m4a"
+                    ),
+                    makeVoice(
+                        id: transcriptOnlyVoiceID,
+                        originalRelativePath: nil,
+                        transcriptText: "只保留转写",
+                        transcriptionStatus: .completed
+                    )
+                ]
+            ),
+            userID: userID,
+            context: context
+        )
+        _ = try await workspace.create(
+            NewEntry(
+                text: "其他用户语音",
+                voices: [
+                    makeVoice(
+                        id: otherUsersVoiceID,
+                        originalRelativePath: "Audio/\(otherUsersVoiceID.uuidString)/original.m4a"
+                    )
+                ]
+            ),
+            userID: otherUserID,
+            context: context
+        )
+
+        let retainedVoiceIDs = try await workspace.retainedVoiceIDs(userID: userID)
+        let allRetainedVoiceIDs = try await workspace.allRetainedVoiceIDs()
+
+        XCTAssertEqual(retainedVoiceIDs, [retainedVoiceID])
+        XCTAssertEqual(allRetainedVoiceIDs, [retainedVoiceID, otherUsersVoiceID])
+        XCTAssertFalse(allRetainedVoiceIDs.contains(transcriptOnlyVoiceID))
+    }
+
+    @MainActor
+    func testRetainedVoiceIDsProtectBothRecordAndPathIDsWhenMismatched() async throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let workspace = SwiftDataDayWorkspace(modelContainer: container)
+        let recordID = UUID()
+        let pathID = UUID()
+        let context = ModelContext(container)
+        context.insert(
+            VoiceAttachmentRecord(
+                id: recordID,
+                entryID: UUID(),
+                userID: userID,
+                dayKeyRawValue: 20260713,
+                targetPhotoID: nil,
+                sortIndex: 0,
+                durationMilliseconds: 1_000,
+                contentTypeIdentifier: "public.mpeg-4-audio",
+                byteCount: 1_024,
+                originalRelativePath: VoiceAudioStoragePath.relativePath(for: pathID),
+                transcriptText: "",
+                transcriptionStatusRawValue: VoiceTranscriptionStatus.failed.rawValue,
+                isTranscriptUserEdited: false
+            )
+        )
+        try context.save()
+
+        let retainedIDs = try await workspace.allRetainedVoiceIDs()
+
+        XCTAssertEqual(retainedIDs, [recordID, pathID])
+    }
+
+    func testUpdateVoiceTranscriptChecksOwnerAndAdvancesEntryUpdatedAt() async throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let workspace = SwiftDataDayWorkspace(modelContainer: container)
+        let shanghai = try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+        let voiceID = UUID(uuidString: "B3F1CA21-9482-43CB-8721-E3C3FD04A2D1")!
+        let createdAt = try instant("2026-07-13T08:00:00Z")
+        let updatedAt = try instant("2026-07-13T09:30:00Z")
+        let saved = try await workspace.create(
+            NewEntry(
+                text: "等待修正转写",
+                voices: [
+                    makeVoice(
+                        id: voiceID,
+                        originalRelativePath: "Audio/\(voiceID.uuidString)/original.m4a",
+                        transcriptionStatus: .failed
+                    )
+                ]
+            ),
+            userID: userID,
+            context: RecordingContext(instant: createdAt, timeZone: shanghai)
+        )
+
+        do {
+            _ = try await workspace.updateVoiceTranscript(
+                id: voiceID,
+                userID: UUID(),
+                text: "不能修改其他用户的转写",
+                status: .completed,
+                source: .manual,
+                isUserEdited: true,
+                sourceLocaleIdentifier: "zh-CN",
+                updatedAt: updatedAt
+            )
+            XCTFail("其他用户不应能修改该语音转写")
+        } catch {
+            XCTAssertEqual(error as? DayWorkspaceError, .voiceAttachmentNotFound)
+        }
+
+        let updatedVoice = try await workspace.updateVoiceTranscript(
+            id: voiceID,
+            userID: userID,
+            text: "  用户修正后的转写。  ",
+            status: .completed,
+            source: .manual,
+            isUserEdited: true,
+            sourceLocaleIdentifier: "  zh-Hans-CN  ",
+            updatedAt: updatedAt
+        )
+        let reloadedEntries = try await workspace.entries(
+            for: saved.dayKey,
+            userID: userID
+        )
+        let reloadedEntry = try XCTUnwrap(reloadedEntries.first)
+
+        XCTAssertEqual(updatedVoice.transcriptText, "用户修正后的转写。")
+        XCTAssertEqual(updatedVoice.transcriptionStatus, .completed)
+        XCTAssertEqual(updatedVoice.transcriptionSource, .manual)
+        XCTAssertTrue(updatedVoice.isTranscriptUserEdited)
+        XCTAssertEqual(updatedVoice.sourceLocaleIdentifier, "zh-Hans-CN")
+        XCTAssertEqual(reloadedEntry.updatedAt, updatedAt)
+        XCTAssertEqual(reloadedEntry.voices, [updatedVoice])
+    }
+
     func testEntriesWithSameCreationTimeUseStableIDDescendingOrder() async throws {
         let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
         let workspace = SwiftDataDayWorkspace(modelContainer: container)
@@ -324,6 +721,7 @@ final class SwiftDataDayWorkspaceTests: XCTestCase {
         let shanghai = try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
         let createdAt = try instant("2026-07-13T04:00:00Z")
         let photoID = UUID(uuidString: "DA88B311-0DD4-4C56-BD49-1758A48BB956")!
+        let voiceID = UUID(uuidString: "FB838947-453A-4EA2-93E2-2B072A506C8D")!
 
         try await writePersistentEntry(
             storeURL: storeURL,
@@ -335,6 +733,16 @@ final class SwiftDataDayWorkspaceTests: XCTestCase {
                         annotationText: "原图也在",
                         originalRelativePath: "original/reopen.heic",
                         thumbnailRelativePath: "thumbnail/reopen.jpg"
+                    )
+                ],
+                voices: [
+                    makeVoice(
+                        id: voiceID,
+                        originalRelativePath: "Audio/\(voiceID.uuidString)/original.m4a",
+                        transcriptText: "重启后转写也在",
+                        transcriptionStatus: .completed,
+                        isTranscriptUserEdited: true,
+                        sourceLocaleIdentifier: "zh-CN"
                     )
                 ]
             ),
@@ -353,6 +761,10 @@ final class SwiftDataDayWorkspaceTests: XCTestCase {
         XCTAssertEqual(entries.map(\.text), ["重启后还在这里"])
         XCTAssertEqual(entries.first?.photos.map(\.id), [photoID])
         XCTAssertEqual(entries.first?.photos.first?.annotationText, "原图也在")
+        XCTAssertEqual(entries.first?.voices.map(\.id), [voiceID])
+        XCTAssertEqual(entries.first?.voices.first?.transcriptText, "重启后转写也在")
+        XCTAssertTrue(entries.first?.voices.first?.isTranscriptUserEdited == true)
+        XCTAssertEqual(entries.first?.voices.first?.sourceLocaleIdentifier, "zh-CN")
     }
 
     func testLegacyTextStoreOpensWithExpandedSchema() async throws {
@@ -383,6 +795,7 @@ final class SwiftDataDayWorkspaceTests: XCTestCase {
 
         XCTAssertEqual(entries.map(\.text), ["旧版本的文字记录"])
         XCTAssertTrue(entries.first?.photos.isEmpty == true)
+        XCTAssertTrue(entries.first?.voices.isEmpty == true)
     }
 
     private func writePersistentEntry(
@@ -449,6 +862,31 @@ final class SwiftDataDayWorkspaceTests: XCTestCase {
             byteCount: 2_048,
             originalRelativePath: originalRelativePath,
             thumbnailRelativePath: thumbnailRelativePath
+        )
+    }
+
+    private func makeVoice(
+        id: UUID = UUID(),
+        targetPhotoID: UUID? = nil,
+        originalRelativePath: String?,
+        transcriptText: String = "",
+        transcriptionStatus: VoiceTranscriptionStatus = .notRequested,
+        transcriptionSource: VoiceTranscriptionSource? = nil,
+        isTranscriptUserEdited: Bool = false,
+        sourceLocaleIdentifier: String = ""
+    ) -> NewVoiceAttachment {
+        NewVoiceAttachment(
+            id: id,
+            targetPhotoID: targetPhotoID,
+            durationMilliseconds: 12_345,
+            contentTypeIdentifier: originalRelativePath == nil ? nil : "public.mpeg-4-audio",
+            byteCount: originalRelativePath == nil ? 0 : 4_096,
+            originalRelativePath: originalRelativePath,
+            transcriptText: transcriptText,
+            transcriptionStatus: transcriptionStatus,
+            transcriptionSource: transcriptionSource,
+            sourceLocaleIdentifier: sourceLocaleIdentifier,
+            isTranscriptUserEdited: isTranscriptUserEdited
         )
     }
 

@@ -3,11 +3,20 @@ import SwiftData
 
 enum PersistenceMappingError: LocalizedError {
     case invalidDayKey(Int)
+    case invalidVoiceTranscriptionStatus(String)
+    case invalidVoiceTranscriptionSource(String)
+    case invalidVoiceStorageReference(String)
 
     var errorDescription: String? {
         switch self {
         case let .invalidDayKey(value):
             return "本地记录包含无效的日期键：\(value)。"
+        case let .invalidVoiceTranscriptionStatus(value):
+            return "本地记录包含无效的语音转写状态：\(value)。"
+        case let .invalidVoiceTranscriptionSource(value):
+            return "本地记录包含无效的语音转写来源：\(value)。"
+        case let .invalidVoiceStorageReference(value):
+            return "本地记录包含无效的语音文件引用：\(value)。"
         }
     }
 }
@@ -43,7 +52,10 @@ final class EntryRecord {
         self.text = text
     }
 
-    func domainEntry(photos: [PhotoAttachment]) throws -> Entry {
+    func domainEntry(
+        photos: [PhotoAttachment],
+        voices: [VoiceAttachment] = []
+    ) throws -> Entry {
         guard let dayKey = DayKey(storageValue: dayKeyRawValue) else {
             throw PersistenceMappingError.invalidDayKey(dayKeyRawValue)
         }
@@ -57,7 +69,8 @@ final class EntryRecord {
             updatedAt: updatedAt,
             creationTimeZoneIdentifier: creationTimeZoneIdentifier,
             text: text,
-            photos: photos
+            photos: photos,
+            voices: voices
         )
     }
 }

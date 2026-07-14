@@ -4,6 +4,7 @@ struct TodayView: View {
     @ObservedObject var appModel: AppModel
     @AccessibilityFocusState private var isTitleFocused: Bool
     @State private var presentedPhoto: FullScreenPhotoItem?
+    @State private var editingVoice: VoiceAttachment?
 
     var body: some View {
         ScrollView {
@@ -38,6 +39,7 @@ struct TodayView: View {
                     EntryTimeline(
                         entries: appModel.entries,
                         timeZone: appModel.todayTimeZone,
+                        appModel: appModel,
                         photoLibrary: appModel.photoLibrary,
                         onOpenPhoto: { photo, position in
                             presentedPhoto = FullScreenPhotoItem(
@@ -45,7 +47,8 @@ struct TodayView: View {
                                 relativePath: photo.originalRelativePath,
                                 accessibilityLabel: "照片 \(position) 原图"
                             )
-                        }
+                        },
+                        onEditVoice: { editingVoice = $0 }
                     )
                     .padding(.top, 18)
                 }
@@ -81,6 +84,12 @@ struct TodayView: View {
             FullScreenPhotoViewer(
                 item: photo,
                 photoLibrary: appModel.photoLibrary
+            )
+        }
+        .sheet(item: $editingVoice) { voice in
+            VoiceTranscriptEditor(
+                appModel: appModel,
+                voice: voice
             )
         }
     }
@@ -138,8 +147,10 @@ private struct TodayHeader: View {
 private struct EntryTimeline: View {
     let entries: [Entry]
     let timeZone: TimeZone
+    @ObservedObject var appModel: AppModel
     let photoLibrary: any PhotoLibrary
     let onOpenPhoto: (PhotoAttachment, Int) -> Void
+    let onEditVoice: (VoiceAttachment) -> Void
 
     var body: some View {
         LazyVStack(spacing: 12) {
@@ -148,8 +159,10 @@ private struct EntryTimeline: View {
                     entry: entry,
                     timeZone: timeZone,
                     isLast: index == entries.count - 1,
+                    appModel: appModel,
                     photoLibrary: photoLibrary,
-                    onOpenPhoto: onOpenPhoto
+                    onOpenPhoto: onOpenPhoto,
+                    onEditVoice: onEditVoice
                 )
             }
         }
@@ -160,8 +173,10 @@ private struct EntryTimelineRow: View {
     let entry: Entry
     let timeZone: TimeZone
     let isLast: Bool
+    @ObservedObject var appModel: AppModel
     let photoLibrary: any PhotoLibrary
     let onOpenPhoto: (PhotoAttachment, Int) -> Void
+    let onEditVoice: (VoiceAttachment) -> Void
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -204,12 +219,42 @@ private struct EntryTimelineRow: View {
                 }
 
                 ForEach(Array(entry.photos.enumerated()), id: \.element.id) { index, photo in
-                    EntryPhotoView(
-                        photo: photo,
-                        position: index + 1,
-                        photoLibrary: photoLibrary,
-                        onOpen: { onOpenPhoto(photo, index + 1) }
-                    )
+                    VStack(alignment: .leading, spacing: 8) {
+                        EntryPhotoView(
+                            photo: photo,
+                            position: index + 1,
+                            photoLibrary: photoLibrary,
+                            onOpen: { onOpenPhoto(photo, index + 1) }
+                        )
+
+                        ForEach(voices(targeting: photo.id)) { voice in
+                            PhotoVoiceAnnotationView(
+                                appModel: appModel,
+                                voice: voice,
+                                photoPosition: index + 1,
+                                isOrphaned: false,
+                                onEdit: { onEditVoice(voice) }
+                            )
+                        }
+                    }
+                }
+
+                ForEach(unattachedVoices) { voice in
+                    if voice.targetPhotoID == nil {
+                        GlobalVoiceView(
+                            appModel: appModel,
+                            voice: voice,
+                            onEdit: { onEditVoice(voice) }
+                        )
+                    } else {
+                        PhotoVoiceAnnotationView(
+                            appModel: appModel,
+                            voice: voice,
+                            photoPosition: nil,
+                            isOrphaned: true,
+                            onEdit: { onEditVoice(voice) }
+                        )
+                    }
                 }
             }
             .padding(16)
@@ -221,6 +266,259 @@ private struct EntryTimelineRow: View {
             .shadow(color: AppTheme.ink.opacity(0.04), radius: 10, y: 4)
         }
         .accessibilityElement(children: .contain)
+    }
+
+    private var photoIDs: Set<UUID> {
+        Set(entry.photos.map(\.id))
+    }
+
+    private var unattachedVoices: [VoiceAttachment] {
+        entry.voices.filter { voice in
+            guard let targetPhotoID = voice.targetPhotoID else {
+                return true
+            }
+            return !photoIDs.contains(targetPhotoID)
+        }
+    }
+
+    private func voices(targeting photoID: UUID) -> [VoiceAttachment] {
+        entry.voices.filter { $0.targetPhotoID == photoID }
+    }
+}
+
+private struct GlobalVoiceView: View {
+    @ObservedObject var appModel: AppModel
+    let voice: VoiceAttachment
+    let onEdit: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Label("整条记录语音", systemImage: "waveform")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(AppTheme.sage)
+
+            EntryVoiceView(
+                appModel: appModel,
+                voice: voice,
+                onEdit: onEdit
+            )
+        }
+        .accessibilityElement(children: .contain)
+    }
+}
+
+private struct PhotoVoiceAnnotationView: View {
+    @ObservedObject var appModel: AppModel
+    let voice: VoiceAttachment
+    let photoPosition: Int?
+    let isOrphaned: Bool
+    let onEdit: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Label(
+                isOrphaned ? "语音批注 · 对应照片不可用" : "语音批注",
+                systemImage: isOrphaned ? "exclamationmark.triangle" : "waveform"
+            )
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(isOrphaned ? AppTheme.accent : AppTheme.sage)
+            .accessibilityLabel(accessibilityTitle)
+
+            EntryVoiceView(
+                appModel: appModel,
+                voice: voice,
+                onEdit: onEdit
+            )
+        }
+        .padding(.leading, 12)
+        .overlay(alignment: .leading) {
+            Rectangle()
+                .fill(isOrphaned ? AppTheme.accent : AppTheme.divider)
+                .frame(width: 2)
+                .accessibilityHidden(true)
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    private var accessibilityTitle: String {
+        if let photoPosition {
+            return "照片 \(photoPosition) 的语音批注"
+        }
+        return "语音批注，对应照片不可用"
+    }
+}
+
+private struct EntryVoiceView: View {
+    @ObservedObject var appModel: AppModel
+    let voice: VoiceAttachment
+    let onEdit: () -> Void
+
+    private var isTranscribing: Bool {
+        appModel.transcribingSavedVoiceIDs.contains(voice.id)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if let relativePath = voice.originalRelativePath {
+                VoicePlaybackView(
+                    appModel: appModel,
+                    voiceID: voice.id,
+                    relativePath: relativePath,
+                    durationMilliseconds: voice.durationMilliseconds
+                )
+            } else {
+                Label("仅保留转写", systemImage: "text.quote")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(AppTheme.sage)
+            }
+
+            HStack(alignment: .top, spacing: 10) {
+                if isTranscribing {
+                    ProgressView()
+                    Text("正在转写")
+                        .font(.callout)
+                        .foregroundStyle(AppTheme.mutedInk)
+                } else {
+                    Label(
+                        statusLabel,
+                        systemImage: statusIcon
+                    )
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.mutedInk)
+                }
+
+                Spacer(minLength: 12)
+
+                if canRetry {
+                    Button {
+                        appModel.retrySavedVoiceTranscription(voice)
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("重试语音转写")
+                    .help("重试转写")
+                }
+
+                Button(action: onEdit) {
+                    Image(systemName: "pencil")
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                .disabled(isTranscribing)
+                .accessibilityLabel("编辑语音转写")
+                .accessibilityHint(isTranscribing ? "转写完成后可以编辑" : "")
+                .help("编辑转写")
+            }
+
+            if !voice.transcriptText.isEmpty {
+                Text(voice.transcriptText)
+                    .font(.callout)
+                    .foregroundStyle(AppTheme.ink)
+                    .lineSpacing(4)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityLabel("语音转写：\(voice.transcriptText)")
+            }
+        }
+        .padding(.top, 4)
+    }
+
+    private var canRetry: Bool {
+        voice.originalRelativePath != nil
+            && !voice.isTranscriptUserEdited
+            && appModel.transcribingSavedVoiceIDs.isEmpty
+            && voice.transcriptionStatus != .completed
+    }
+
+    private var statusLabel: String {
+        if voice.isTranscriptUserEdited {
+            return "转写已编辑"
+        }
+        switch voice.transcriptionStatus {
+        case .notRequested:
+            return "尚未转写"
+        case .pending:
+            return "等待转写"
+        case .completed:
+            switch voice.transcriptionSource {
+            case .onDevice:
+                return "设备内转写完成"
+            case .appleNetwork:
+                return "Apple 网络转写完成"
+            case .manual:
+                return "转写已编辑"
+            case nil:
+                return "转写完成"
+            }
+        case .failed:
+            return "转写失败"
+        case .permissionDenied:
+            return "未授权语音识别"
+        }
+    }
+
+    private var statusIcon: String {
+        if voice.isTranscriptUserEdited {
+            return "pencil.circle"
+        }
+        switch voice.transcriptionStatus {
+        case .completed:
+            return "checkmark.circle"
+        case .failed, .permissionDenied:
+            return "exclamationmark.circle"
+        case .notRequested, .pending:
+            return "text.bubble"
+        }
+    }
+}
+
+private struct VoiceTranscriptEditor: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var appModel: AppModel
+    let voice: VoiceAttachment
+    @State private var text: String
+    @State private var isSaving = false
+
+    init(appModel: AppModel, voice: VoiceAttachment) {
+        self.appModel = appModel
+        self.voice = voice
+        _text = State(initialValue: voice.transcriptText)
+    }
+
+    var body: some View {
+        NavigationStack {
+            TextEditor(text: $text)
+                .font(.body)
+                .foregroundStyle(AppTheme.ink)
+                .scrollContentBackground(.hidden)
+                .padding(16)
+                .background(AppTheme.paper)
+                .navigationTitle("编辑转写")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("取消") { dismiss() }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("保存") {
+                            isSaving = true
+                            Task {
+                                if await appModel.updateSavedVoiceTranscript(
+                                    voice,
+                                    text: text
+                                ) {
+                                    dismiss()
+                                }
+                                isSaving = false
+                            }
+                        }
+                        .disabled(isSaving)
+                    }
+                }
+        }
+        .presentationDetents([.medium, .large])
+        .interactiveDismissDisabled(isSaving)
     }
 }
 

@@ -22,7 +22,9 @@ struct AppRootView: View {
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase != .active {
-                Task { await appModel.flushCaptureDraft() }
+                appModel.handleSceneDeactivation(
+                    isEnteringBackground: newPhase == .background
+                )
             }
             if newPhase == .background {
                 privacyGate.lock()

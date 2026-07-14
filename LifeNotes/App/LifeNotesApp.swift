@@ -12,7 +12,11 @@ struct LifeNotesApp: App {
             let container = try ModelContainerFactory.make()
             let workspace = SwiftDataDayWorkspace(modelContainer: container)
             let photoLibrary = try FilePhotoLibrary.makeDefault()
+            let audioLibrary = try FileAudioLibrary.makeDefault()
             let captureDraftStore = try FileCaptureDraftStore.makeDefault()
+            let voiceRecorder = SystemVoiceRecorder()
+            let speechTranscriber = SystemSpeechTranscriber()
+            let voicePlayer = SystemVoicePlayer()
             let userID = LocalUserIdentity.loadOrCreate()
 
             modelContainer = container
@@ -20,7 +24,11 @@ struct LifeNotesApp: App {
                 wrappedValue: AppModel(
                     workspace: workspace,
                     photoLibrary: photoLibrary,
+                    audioLibrary: audioLibrary,
                     captureDraftStore: captureDraftStore,
+                    voiceRecorder: voiceRecorder,
+                    speechTranscriber: speechTranscriber,
+                    voicePlayer: voicePlayer,
                     userID: userID
                 )
             )

@@ -76,6 +76,23 @@ final class FileCaptureDraftStoreTests: XCTestCase {
         XCTAssertEqual(reloadedSnapshot?.id, snapshot.id)
         XCTAssertEqual(reloadedSnapshot?.text, "旧草稿")
         XCTAssertEqual(reloadedSnapshot?.photos, [])
+        XCTAssertEqual(reloadedSnapshot?.voices, [])
+    }
+
+    func testVoiceSnapshotWithoutTranscriptionSourceStillLoads() async throws {
+        let fixture = try makeFixture()
+        defer { fixture.remove() }
+        let store = try FileCaptureDraftStore(fileURL: fixture.fileURL)
+        let legacyData = Data(
+            #"{"id":"A2EA4DFC-F733-48B2-9A98-65C1B2026539","text":"旧语音草稿","photos":[],"voices":[{"id":"BC28336B-FA79-43C6-B0C7-8BBA70212AA0","captureState":"ready","keepOriginalAudio":true,"transcriptText":"旧转写","transcriptionStatus":"completed","sourceLocaleIdentifier":"zh-CN","isTranscriptUserEdited":false}]}"#.utf8
+        )
+        try legacyData.write(to: fixture.fileURL)
+
+        let loadedSnapshot = try await store.load()
+        let snapshot = try XCTUnwrap(loadedSnapshot)
+
+        XCTAssertEqual(snapshot.voices.first?.transcriptText, "旧转写")
+        XCTAssertNil(snapshot.voices.first?.transcriptionSource)
     }
 
     private func makeSnapshot(text: String) -> CaptureDraftSnapshot {
@@ -104,6 +121,18 @@ final class FileCaptureDraftStoreTests: XCTestCase {
                     id: UUID(uuidString: "5599B566-27E3-4055-B7FE-E9F1133AD511")!,
                     status: .failed,
                     annotationText: "导入失败"
+                )
+            ],
+            voices: [
+                CaptureDraftVoiceSnapshot(
+                    id: UUID(uuidString: "BC28336B-FA79-43C6-B0C7-8BBA70212AA0")!,
+                    captureState: .paused,
+                    keepOriginalAudio: false,
+                    transcriptText: "一段已经修正的转写",
+                    transcriptionStatus: .completed,
+                    transcriptionSource: .manual,
+                    sourceLocaleIdentifier: "zh-CN",
+                    isTranscriptUserEdited: true
                 )
             ]
         )

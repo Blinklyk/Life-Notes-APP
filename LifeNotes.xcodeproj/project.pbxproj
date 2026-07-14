@@ -35,6 +35,21 @@
 		AA1000000000000000000008 /* FileCaptureDraftStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000008 /* FileCaptureDraftStoreTests.swift */; };
 		AA1000000000000000000009 /* AppModelPhotoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000009 /* AppModelPhotoTests.swift */; };
 		AA100000000000000000000A /* PhotoPersistenceIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100000000000000000000A /* PhotoPersistenceIntegrationTests.swift */; };
+		AA2000000000000000000001 /* VoiceAttachmentRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2000000000000000000001 /* VoiceAttachmentRecord.swift */; };
+		AA2000000000000000000002 /* AudioLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2000000000000000000002 /* AudioLibrary.swift */; };
+		AA2000000000000000000003 /* FileAudioLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2000000000000000000003 /* FileAudioLibrary.swift */; };
+		AA2000000000000000000004 /* VoiceRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2000000000000000000004 /* VoiceRecorder.swift */; };
+		AA2000000000000000000005 /* SystemVoiceRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2000000000000000000005 /* SystemVoiceRecorder.swift */; };
+		AA2000000000000000000006 /* SpeechTranscriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2000000000000000000006 /* SpeechTranscriber.swift */; };
+		AA2000000000000000000007 /* SystemSpeechTranscriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2000000000000000000007 /* SystemSpeechTranscriber.swift */; };
+		AA2000000000000000000008 /* VoicePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2000000000000000000008 /* VoicePlayer.swift */; };
+		AA2000000000000000000009 /* SystemVoicePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2000000000000000000009 /* SystemVoicePlayer.swift */; };
+		AA200000000000000000000A /* VoiceFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200000000000000000000A /* VoiceFormatting.swift */; };
+		AA200000000000000000000B /* VoicePlaybackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200000000000000000000B /* VoicePlaybackView.swift */; };
+		AA200000000000000000000C /* VoiceCaptureCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200000000000000000000C /* VoiceCaptureCard.swift */; };
+		AA200000000000000000000D /* VoiceDomainTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200000000000000000000D /* VoiceDomainTests.swift */; };
+		AA200000000000000000000E /* FileAudioLibraryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200000000000000000000E /* FileAudioLibraryTests.swift */; };
+		AA200000000000000000000F /* AppModelVoiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200000000000000000000F /* AppModelVoiceTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -78,6 +93,21 @@
 		BB1000000000000000000008 /* FileCaptureDraftStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileCaptureDraftStoreTests.swift; sourceTree = "<group>"; };
 		BB1000000000000000000009 /* AppModelPhotoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModelPhotoTests.swift; sourceTree = "<group>"; };
 		BB100000000000000000000A /* PhotoPersistenceIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoPersistenceIntegrationTests.swift; sourceTree = "<group>"; };
+		BB2000000000000000000001 /* VoiceAttachmentRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceAttachmentRecord.swift; sourceTree = "<group>"; };
+		BB2000000000000000000002 /* AudioLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioLibrary.swift; sourceTree = "<group>"; };
+		BB2000000000000000000003 /* FileAudioLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileAudioLibrary.swift; sourceTree = "<group>"; };
+		BB2000000000000000000004 /* VoiceRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceRecorder.swift; sourceTree = "<group>"; };
+		BB2000000000000000000005 /* SystemVoiceRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemVoiceRecorder.swift; sourceTree = "<group>"; };
+		BB2000000000000000000006 /* SpeechTranscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechTranscriber.swift; sourceTree = "<group>"; };
+		BB2000000000000000000007 /* SystemSpeechTranscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemSpeechTranscriber.swift; sourceTree = "<group>"; };
+		BB2000000000000000000008 /* VoicePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoicePlayer.swift; sourceTree = "<group>"; };
+		BB2000000000000000000009 /* SystemVoicePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemVoicePlayer.swift; sourceTree = "<group>"; };
+		BB200000000000000000000A /* VoiceFormatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceFormatting.swift; sourceTree = "<group>"; };
+		BB200000000000000000000B /* VoicePlaybackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoicePlaybackView.swift; sourceTree = "<group>"; };
+		BB200000000000000000000C /* VoiceCaptureCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceCaptureCard.swift; sourceTree = "<group>"; };
+		BB200000000000000000000D /* VoiceDomainTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceDomainTests.swift; sourceTree = "<group>"; };
+		BB200000000000000000000E /* FileAudioLibraryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileAudioLibraryTests.swift; sourceTree = "<group>"; };
+		BB200000000000000000000F /* AppModelVoiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModelVoiceTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -165,6 +195,10 @@
 				CC0000000000000000000007 /* DayWorkspace */,
 				CC1000000000000000000001 /* MediaLibrary */,
 				CC1000000000000000000004 /* CaptureDraft */,
+				CC2000000000000000000001 /* AudioLibrary */,
+				CC2000000000000000000002 /* AudioRecording */,
+				CC2000000000000000000003 /* AudioPlayback */,
+				CC2000000000000000000004 /* Transcription */,
 			);
 			path = Modules;
 			sourceTree = "<group>";
@@ -184,6 +218,8 @@
 				CC000000000000000000000A /* Identity */,
 				CC1000000000000000000002 /* Media */,
 				CC1000000000000000000005 /* Drafts */,
+				CC2000000000000000000005 /* Audio */,
+				CC2000000000000000000006 /* Transcription */,
 			);
 			path = Infrastructure;
 			sourceTree = "<group>";
@@ -193,6 +229,7 @@
 			children = (
 				BB0000000000000000000004 /* EntryRecord.swift */,
 				BB1000000000000000000002 /* PhotoAttachmentRecord.swift */,
+				BB2000000000000000000001 /* VoiceAttachmentRecord.swift */,
 				BB0000000000000000000005 /* ModelContainerFactory.swift */,
 				BB0000000000000000000006 /* SwiftDataDayWorkspace.swift */,
 			);
@@ -221,6 +258,7 @@
 			isa = PBXGroup;
 			children = (
 				BB000000000000000000000F /* CaptureView.swift */,
+				BB200000000000000000000C /* VoiceCaptureCard.swift */,
 			);
 			path = Capture;
 			sourceTree = "<group>";
@@ -245,6 +283,7 @@
 			isa = PBXGroup;
 			children = (
 				BB0000000000000000000008 /* AppDateFormatting.swift */,
+				BB200000000000000000000A /* VoiceFormatting.swift */,
 			);
 			path = Support;
 			sourceTree = "<group>";
@@ -258,6 +297,9 @@
 				BB1000000000000000000008 /* FileCaptureDraftStoreTests.swift */,
 				BB1000000000000000000009 /* AppModelPhotoTests.swift */,
 				BB100000000000000000000A /* PhotoPersistenceIntegrationTests.swift */,
+				BB200000000000000000000D /* VoiceDomainTests.swift */,
+				BB200000000000000000000E /* FileAudioLibraryTests.swift */,
+				BB200000000000000000000F /* AppModelVoiceTests.swift */,
 			);
 			path = LifeNotesTests;
 			sourceTree = "<group>";
@@ -274,6 +316,7 @@
 			isa = PBXGroup;
 			children = (
 				BB1000000000000000000003 /* FilePhotoLibrary.swift */,
+				BB2000000000000000000003 /* FileAudioLibrary.swift */,
 			);
 			path = Media;
 			sourceTree = "<group>";
@@ -282,6 +325,7 @@
 			isa = PBXGroup;
 			children = (
 				BB1000000000000000000004 /* PhotoAssetView.swift */,
+				BB200000000000000000000B /* VoicePlaybackView.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -300,6 +344,55 @@
 				BB1000000000000000000007 /* FileCaptureDraftStore.swift */,
 			);
 			path = Drafts;
+			sourceTree = "<group>";
+		};
+		CC2000000000000000000001 /* AudioLibrary */ = {
+			isa = PBXGroup;
+			children = (
+				BB2000000000000000000002 /* AudioLibrary.swift */,
+			);
+			path = AudioLibrary;
+			sourceTree = "<group>";
+		};
+		CC2000000000000000000002 /* AudioRecording */ = {
+			isa = PBXGroup;
+			children = (
+				BB2000000000000000000004 /* VoiceRecorder.swift */,
+			);
+			path = AudioRecording;
+			sourceTree = "<group>";
+		};
+		CC2000000000000000000003 /* AudioPlayback */ = {
+			isa = PBXGroup;
+			children = (
+				BB2000000000000000000008 /* VoicePlayer.swift */,
+			);
+			path = AudioPlayback;
+			sourceTree = "<group>";
+		};
+		CC2000000000000000000004 /* Transcription */ = {
+			isa = PBXGroup;
+			children = (
+				BB2000000000000000000006 /* SpeechTranscriber.swift */,
+			);
+			path = Transcription;
+			sourceTree = "<group>";
+		};
+		CC2000000000000000000005 /* Audio */ = {
+			isa = PBXGroup;
+			children = (
+				BB2000000000000000000005 /* SystemVoiceRecorder.swift */,
+				BB2000000000000000000009 /* SystemVoicePlayer.swift */,
+			);
+			path = Audio;
+			sourceTree = "<group>";
+		};
+		CC2000000000000000000006 /* Transcription */ = {
+			isa = PBXGroup;
+			children = (
+				BB2000000000000000000007 /* SystemSpeechTranscriber.swift */,
+			);
+			path = Transcription;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -410,19 +503,31 @@
 				AA0000000000000000000002 /* Entry.swift in Sources */,
 				AA0000000000000000000003 /* DayWorkspace.swift in Sources */,
 				AA1000000000000000000001 /* PhotoLibrary.swift in Sources */,
+				AA2000000000000000000002 /* AudioLibrary.swift in Sources */,
+				AA2000000000000000000004 /* VoiceRecorder.swift in Sources */,
+				AA2000000000000000000008 /* VoicePlayer.swift in Sources */,
+				AA2000000000000000000006 /* SpeechTranscriber.swift in Sources */,
 				AA1000000000000000000006 /* CaptureDraftStore.swift in Sources */,
 				AA0000000000000000000004 /* EntryRecord.swift in Sources */,
 				AA1000000000000000000002 /* PhotoAttachmentRecord.swift in Sources */,
+				AA2000000000000000000001 /* VoiceAttachmentRecord.swift in Sources */,
 				AA0000000000000000000005 /* ModelContainerFactory.swift in Sources */,
 				AA0000000000000000000006 /* SwiftDataDayWorkspace.swift in Sources */,
 				AA0000000000000000000007 /* LocalUserIdentity.swift in Sources */,
 				AA1000000000000000000003 /* FilePhotoLibrary.swift in Sources */,
+				AA2000000000000000000003 /* FileAudioLibrary.swift in Sources */,
+				AA2000000000000000000005 /* SystemVoiceRecorder.swift in Sources */,
+				AA2000000000000000000009 /* SystemVoicePlayer.swift in Sources */,
+				AA2000000000000000000007 /* SystemSpeechTranscriber.swift in Sources */,
 				AA1000000000000000000007 /* FileCaptureDraftStore.swift in Sources */,
 				AA000000000000000000000F /* CaptureView.swift in Sources */,
+				AA200000000000000000000C /* VoiceCaptureCard.swift in Sources */,
 				AA0000000000000000000010 /* TodayView.swift in Sources */,
 				AA1000000000000000000004 /* PhotoAssetView.swift in Sources */,
+				AA200000000000000000000B /* VoicePlaybackView.swift in Sources */,
 				AA0000000000000000000009 /* AppTheme.swift in Sources */,
 				AA0000000000000000000008 /* AppDateFormatting.swift in Sources */,
+				AA200000000000000000000A /* VoiceFormatting.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -436,6 +541,9 @@
 				AA1000000000000000000008 /* FileCaptureDraftStoreTests.swift in Sources */,
 				AA1000000000000000000009 /* AppModelPhotoTests.swift in Sources */,
 				AA100000000000000000000A /* PhotoPersistenceIntegrationTests.swift in Sources */,
+				AA200000000000000000000D /* VoiceDomainTests.swift in Sources */,
+				AA200000000000000000000E /* FileAudioLibraryTests.swift in Sources */,
+				AA200000000000000000000F /* AppModelVoiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -574,6 +682,8 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "随心记";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "用于解锁随心记，保护你的私人记录。";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "用于录制随心语音，原始录音默认仅保存在你的设备上。";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "用于将随心语音转成可编辑文字；设备不支持离线识别时可能使用网络。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -604,6 +714,8 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "随心记";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "用于解锁随心记，保护你的私人记录。";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "用于录制随心语音，原始录音默认仅保存在你的设备上。";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "用于将随心语音转成可编辑文字；设备不支持离线识别时可能使用网络。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

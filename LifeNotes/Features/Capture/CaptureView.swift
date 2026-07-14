@@ -68,10 +68,13 @@ struct CaptureView: View {
 
                 photoPicker
 
+                VoiceCaptureSection(appModel: appModel)
+
                 if !appModel.draftPhotos.isEmpty {
                     VStack(spacing: 12) {
                         ForEach(Array(appModel.draftPhotos.enumerated()), id: \.element.id) { index, photo in
                             DraftPhotoRow(
+                                appModel: appModel,
                                 draftPhoto: photo,
                                 position: index + 1,
                                 photoLibrary: appModel.photoLibrary,
@@ -294,6 +297,7 @@ private struct PhotoImportFile: Transferable, Sendable {
 }
 
 private struct DraftPhotoRow: View {
+    @ObservedObject var appModel: AppModel
     let draftPhoto: AppModel.DraftPhoto
     let position: Int
     let photoLibrary: any PhotoLibrary
@@ -379,6 +383,12 @@ private struct DraftPhotoRow: View {
                         .stroke(AppTheme.divider, lineWidth: 1)
                 }
                 .accessibilityLabel("照片 \(position) 的可选批注")
+
+                VoiceCaptureSection(
+                    appModel: appModel,
+                    targetPhotoID: draftPhoto.id,
+                    style: .photoAnnotation
+                )
             }
         }
         .padding(12)

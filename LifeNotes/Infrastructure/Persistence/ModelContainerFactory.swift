@@ -9,7 +9,8 @@ enum ModelContainerFactory {
     ) throws -> ModelContainer {
         let schema = Schema([
             EntryRecord.self,
-            PhotoAttachmentRecord.self
+            PhotoAttachmentRecord.self,
+            VoiceAttachmentRecord.self
         ])
         let configuration: ModelConfiguration
 

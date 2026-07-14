@@ -25,11 +25,13 @@ Life Notes App
 
 ## 当前状态
 
-项目已创建 iOS 17+ 原生 SwiftUI 工程 [LifeNotes.xcodeproj](LifeNotes.xcodeproj)，当前已实现两个本地纵向闭环：
+项目已创建 iOS 17+ 原生 SwiftUI 工程 [LifeNotes.xcodeproj](LifeNotes.xcodeproj)，当前已实现三个本地纵向闭环：
 
 `启动并解锁 → 立即记录纯文字 → SwiftData 本地保存 → 进入今天页 → 重启后仍可读取`
 
 `从系统相册有序选择图片 → 逐图填写可选批注 → 保存图文或纯图记录 → 今天页查看缩略图与原图 → 重启后仍可读取`
+
+`录制全局或逐图语音 → 设备端优先转写并可修正 → 保留原音或仅留转写 → 今天页播放与编辑 → 重启后仍可读取`
 
 图片闭环包含以下约束：
 
@@ -39,9 +41,18 @@ Life Notes App
 - 未保存图文草稿会写入受文件保护的 JSON；切到后台时立即 flush，旧草稿自动迁移稳定 ID，已提交草稿不会在重启后重复恢复。
 - SwiftData 保存图片元数据和逐图批注，并可从旧版纯文字 store 自动扩展 schema。
 
-工程包含 `LifeNotes` App target 与 `LifeNotesTests` 单元测试 target。当前在 Xcode 26.6、Swift 6 严格并发及 warnings-as-errors 下通过 47 项单元与集成测试。开发环境最低需要 Xcode 15，并安装 iOS 17+ Simulator runtime。
+语音闭环包含以下约束：
 
-下一项实现为语音录制、系统转写、可编辑转写文本和原始录音保留。
+- 每条记录最多一段全局语音，每张图片最多一段独立语音批注；同一时刻只执行一项录音或转写任务。
+- 单段录音最长 60 秒，支持暂停、继续、停止和试听；切入后台、音频中断或耳机路由断开时会停止并尽量保留已录内容。
+- 优先使用 Apple 设备内语音识别，不支持时通过 Apple 系统能力联网重试；权限拒绝或转写失败不影响原音保存。
+- 原始 M4A 默认保留；用户可主动选择仅保留非空转写。设备内、Apple 网络和手动编辑来源会独立持久化。
+- 音频保存在 App 私有目录并启用完整文件保护；路径、符号链接、大小、时长和孤儿清理均有边界校验。
+- 异常草稿不会静默丢弃重复或失配语音；提交使用稳定草稿 ID 和确定性记录 ID，多个 SwiftData context 并发重试也保持幂等。
+
+工程包含 `LifeNotes` App target 与 `LifeNotesTests` 单元测试 target。当前在 Xcode 26.6、Swift 6 严格并发及 warnings-as-errors 下通过 79 项单元与集成测试。开发环境最低需要 Xcode 15，并安装 iOS 17+ Simulator runtime。
+
+下一项实现为每日感受与重要日，随后接入月历和五瓣花回看。
 
 准备在 macOS 上继续开发时，请从 [docs/MACOS-START.md](docs/MACOS-START.md) 开始，并先阅读根目录 [AGENTS.md](AGENTS.md)。
 

@@ -310,7 +310,11 @@ final class AppModelPhotoTests: XCTestCase {
     private func makeModel(
         workspace: FakeDayWorkspace = FakeDayWorkspace(),
         photoLibrary: FakePhotoLibrary = FakePhotoLibrary(),
-        captureDraftStore: FakeCaptureDraftStore = FakeCaptureDraftStore()
+        audioLibrary: FakeAudioLibrary = FakeAudioLibrary(),
+        captureDraftStore: FakeCaptureDraftStore = FakeCaptureDraftStore(),
+        voiceRecorder: FakeVoiceRecorder? = nil,
+        speechTranscriber: FakeSpeechTranscriber? = nil,
+        voicePlayer: FakeVoicePlayer? = nil
     ) -> AppModel {
         let userID = UUID(uuidString: "FD093DFD-8B78-4D4C-92F0-C7CF83928073")!
         let date = Date(timeIntervalSince1970: 1_768_435_200)
@@ -319,7 +323,11 @@ final class AppModelPhotoTests: XCTestCase {
         return AppModel(
             workspace: workspace,
             photoLibrary: photoLibrary,
+            audioLibrary: audioLibrary,
             captureDraftStore: captureDraftStore,
+            voiceRecorder: voiceRecorder ?? FakeVoiceRecorder(),
+            speechTranscriber: speechTranscriber ?? FakeSpeechTranscriber(),
+            voicePlayer: voicePlayer ?? FakeVoicePlayer(),
             userID: userID,
             now: { date },
             currentTimeZone: { timeZone }
@@ -475,6 +483,38 @@ private actor FakeDayWorkspace: DayWorkspace {
         return Set(storedEntries.flatMap(\.photos).map(\.id)).union(externalPhotoIDs)
     }
 
+    func retainedVoiceIDs(userID: UUID) async throws -> Set<UUID> {
+        Set(
+            storedEntries
+                .filter { $0.userID == userID }
+                .flatMap(\.voices)
+                .filter { $0.originalRelativePath != nil }
+                .map(\.id)
+        )
+    }
+
+    func allRetainedVoiceIDs() async throws -> Set<UUID> {
+        Set(
+            storedEntries
+                .flatMap(\.voices)
+                .filter { $0.originalRelativePath != nil }
+                .map(\.id)
+        )
+    }
+
+    func updateVoiceTranscript(
+        id: UUID,
+        userID: UUID,
+        text: String,
+        status: VoiceTranscriptionStatus,
+        source: VoiceTranscriptionSource?,
+        isUserEdited: Bool,
+        sourceLocaleIdentifier: String,
+        updatedAt: Date
+    ) async throws -> VoiceAttachment {
+        throw DayWorkspaceError.voiceAttachmentNotFound
+    }
+
     func allPhotoIDsCallCount() -> Int {
         allPhotoIDCalls
     }
@@ -552,6 +592,77 @@ private actor FakePhotoLibrary: PhotoLibrary {
     func lastReconciliationKeepSet() -> Set<UUID>? {
         reconciliationKeepSets.last
     }
+}
+
+private actor FakeAudioLibrary: AudioLibrary {
+    func prepareRecording(id: UUID) async throws -> AudioRecordingTarget {
+        AudioRecordingTarget(
+            id: id,
+            fileURL: FileManager.default.temporaryDirectory
+                .appendingPathComponent("\(id.uuidString).m4a"),
+            relativePath: "Audio/\(id.uuidString)/original.m4a"
+        )
+    }
+
+    func completeRecording(id: UUID) async throws -> ImportedAudio {
+        ImportedAudio(
+            id: id,
+            durationMilliseconds: 1_000,
+            contentTypeIdentifier: "public.mpeg-4-audio",
+            byteCount: 1_024,
+            relativePath: "Audio/\(id.uuidString)/original.m4a"
+        )
+    }
+
+    func playbackURL(for relativePath: String) async throws -> URL {
+        FileManager.default.temporaryDirectory.appendingPathComponent(relativePath)
+    }
+
+    func removeAudio(id: UUID) async throws {}
+
+    func removeUnreferencedAudio(
+        keeping audioIDs: Set<UUID>,
+        olderThan: Date
+    ) async throws {}
+}
+
+@MainActor
+private final class FakeVoiceRecorder: VoiceRecorder {
+    var currentDurationMilliseconds = 0
+    var isRecording = false
+    var onRecordingInterrupted: (@MainActor @Sendable () -> Void)?
+
+    func requestPermission() async -> Bool { false }
+    func startRecording(to fileURL: URL, maximumDuration: TimeInterval) throws {}
+    func pauseRecording() {}
+    func resumeRecording(maximumDuration: TimeInterval) throws {}
+    func stopRecording() {}
+    func cancelRecording() {}
+}
+
+@MainActor
+private final class FakeSpeechTranscriber: SpeechTranscriber {
+    func transcribe(
+        fileURL: URL,
+        localeIdentifier: String
+    ) async throws -> SpeechTranscriptResult {
+        throw SpeechTranscriberError.recognizerUnavailable
+    }
+
+    func cancel() {}
+}
+
+@MainActor
+private final class FakeVoicePlayer: VoicePlayer {
+    var onPlaybackInterrupted: (@MainActor @Sendable () -> Void)?
+    var isPlaying = false
+    var currentTimeMilliseconds = 0
+    var durationMilliseconds = 0
+
+    func play(fileURL: URL) throws {}
+    func pause() {}
+    func resume() throws {}
+    func stop() {}
 }
 
 private actor FakeCaptureDraftStore: CaptureDraftStore {
