@@ -25,13 +25,15 @@ Life Notes App
 
 ## 当前状态
 
-项目已创建 iOS 17+ 原生 SwiftUI 工程 [LifeNotes.xcodeproj](LifeNotes.xcodeproj)，当前已实现三个本地纵向闭环：
+项目已创建 iOS 17+ 原生 SwiftUI 工程 [LifeNotes.xcodeproj](LifeNotes.xcodeproj)，当前已实现四个本地纵向闭环：
 
 `启动并解锁 → 立即记录纯文字 → SwiftData 本地保存 → 进入今天页 → 重启后仍可读取`
 
 `从系统相册有序选择图片 → 逐图填写可选批注 → 保存图文或纯图记录 → 今天页查看缩略图与原图 → 重启后仍可读取`
 
 `录制全局或逐图语音 → 设备端优先转写并可修正 → 保留原音或仅留转写 → 今天页播放与编辑 → 重启后仍可读取`
+
+`在今天页选择一至五档每日感受 → 独立标记重要日 → SwiftData 按用户和记录日保存 → 重启后仍可读取`
 
 图片闭环包含以下约束：
 
@@ -50,9 +52,17 @@ Life Notes App
 - 音频保存在 App 私有目录并启用完整文件保护；路径、符号链接、大小、时长和孤儿清理均有边界校验。
 - 异常草稿不会静默丢弃重复或失配语音；提交使用稳定草稿 ID 和确定性记录 ID，多个 SwiftData context 并发重试也保持幂等。
 
-工程包含 `LifeNotes` App target 与 `LifeNotesTests` 单元测试 target。当前在 Xcode 26.6、Swift 6 严格并发及 warnings-as-errors 下通过 79 项单元与集成测试。开发环境最低需要 Xcode 15，并安装 iOS 17+ Simulator runtime。
+每日状态闭环包含以下约束：
 
-下一项实现为每日感受与重要日，随后接入月历和五瓣花回看。
+- 每日感受为一至五档，使用五瓣花表达填充级别；可以清除感受，且不影响重要日标记。
+- 每日感受与重要日分别保存修改时间，二者可独立更新；没有随心记录的日期也可单独保存每日状态。
+- `DayRecord` 使用用户与 `DayKey` 组成稳定唯一范围，读取时校验 scope、用户和日期一致性；旧文字、图片和语音 store 可自动扩展 schema。
+- 首次并发设置感受和重要日会合并到同一条记录；非法本地值会在保存前拒绝，避免调用失败但部分修改已落盘。
+- 同日刷新、跨日刷新和 A→B→A 的迟到异步结果均通过独立 generation 丢弃，不会覆盖用户较新的选择或长期锁住新日期控件。
+
+工程包含 `LifeNotes` App target 与 `LifeNotesTests` 单元测试 target。当前在 Xcode 26.6、Swift 6 严格并发及 warnings-as-errors 下通过 97 项单元与集成测试；每日状态首次并发写入测试另行重复 20 次通过。开发环境最低需要 Xcode 15，并安装 iOS 17+ Simulator runtime。
+
+下一项实现为月历、日期详情和五瓣花回看。
 
 准备在 macOS 上继续开发时，请从 [docs/MACOS-START.md](docs/MACOS-START.md) 开始，并先阅读根目录 [AGENTS.md](AGENTS.md)。
 

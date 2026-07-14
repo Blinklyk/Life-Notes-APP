@@ -204,3 +204,31 @@
 - 自动化已覆盖权限拒绝、转写失败、原音/仅转写、逐图语音、后台恢复、删除顺序、文件安全、迁移和并发幂等。
 - Simulator CLI 当前不提供 biometric 子命令，尚未补完真实麦克风、系统权限弹窗、Face ID 后语音页面、Dynamic Type 与 VoiceOver 的人工 UI 检查；真机验收时继续补验。
 - 下一阶段先实现每日感受与重要日的数据和编辑，再实现月历与五瓣花。
+
+## 2026-07-15：每日感受与重要日闭环
+
+### 用户要求
+
+- 继续实现初代全部功能，本阶段完成每日感受与重要日。
+- 每完成一项更新 `README.md` 和项目 memory，并创建一次中文 Conventional Commit。
+
+### 本次实际修改
+
+- 新增一至五档 `DailyFeeling` 与五瓣花 SwiftUI 表达；今天页可选择、清除每日感受，并独立切换“重要的一天”。
+- 新增 `DayState`、SwiftData `DayRecord` 和 `DayWorkspace` 查询/更新接口；每日感受与重要日分别保存修改时间，没有记录的日期也可保存状态。
+- `DayRecord` 以用户和 `DayKey` 组成唯一 scope，读取及写入前校验 scope、用户、日期和感受原始值，阻止损坏数据串日或部分提交。
+- 多个 SwiftData context 首次并发设置感受与重要日时串行化并合并字段；旧文字、图片、语音 store 可自动迁移到包含 `DayRecord` 的 schema。
+- AppModel 使用刷新、每日状态发布和 mutation 三组 generation，处理同日迟到刷新、跨日更新及 A→B→A ABA 竞态；旧日期请求不会覆盖新选择或继续锁住控件。
+- 补齐五档映射、用户隔离、独立字段更新、清除、持久化重启、旧 store 迁移、并发首次创建、损坏数据拒绝及异步竞态测试。
+
+### 验证
+
+- 全量 Swift parse、`plutil -lint LifeNotes.xcodeproj/project.pbxproj` 与 `git diff --check` 通过。
+- Xcode 26.6、Apple Swift 6.3.3 下以 Swift 6 严格并发和 warnings-as-errors 完成构建及全量测试。
+- iPhone 17 Pro Max / iOS 26.5 Simulator 执行 97 项测试，97 项通过；结果包为 `/tmp/LifeNotesDayStateFinalTests5.xcresult`。
+- 首次并发设置每日感受与重要日的测试额外重复 20 次，20 次通过；结果包为 `/tmp/LifeNotesDayStateConcurrent20.xcresult`。
+
+### 风险与待办
+
+- 五瓣花与重要日控件已覆盖布局回退、44pt 点击区域和 VoiceOver 语义，但仍需在真机补 Dynamic Type、VoiceOver 与跨日本地时间人工验收。
+- 当前仅在今天页编辑每日状态；下一阶段实现月历、日期详情和历史日期的五瓣花回看。

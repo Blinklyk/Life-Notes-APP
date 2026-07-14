@@ -20,6 +20,22 @@ protocol DayWorkspace: Sendable {
 
     func entries(for day: DayKey, userID: UUID) async throws -> [Entry]
 
+    func dayState(for day: DayKey, userID: UUID) async throws -> DayState
+
+    func setFeeling(
+        _ feeling: DailyFeeling?,
+        for day: DayKey,
+        userID: UUID,
+        updatedAt: Date
+    ) async throws -> DayState
+
+    func setImportant(
+        _ isImportant: Bool,
+        for day: DayKey,
+        userID: UUID,
+        updatedAt: Date
+    ) async throws -> DayState
+
     func hasCommittedDraft(id: UUID, userID: UUID) async throws -> Bool
 
     func photoIDs(userID: UUID) async throws -> Set<UUID>

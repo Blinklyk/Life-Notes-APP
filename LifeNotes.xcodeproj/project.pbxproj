@@ -50,6 +50,12 @@
 		AA200000000000000000000D /* VoiceDomainTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200000000000000000000D /* VoiceDomainTests.swift */; };
 		AA200000000000000000000E /* FileAudioLibraryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200000000000000000000E /* FileAudioLibraryTests.swift */; };
 		AA200000000000000000000F /* AppModelVoiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200000000000000000000F /* AppModelVoiceTests.swift */; };
+		AA3000000000000000000001 /* DailyFeeling.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB3000000000000000000001 /* DailyFeeling.swift */; };
+		AA3000000000000000000002 /* DayState.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB3000000000000000000002 /* DayState.swift */; };
+		AA3000000000000000000003 /* DayRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB3000000000000000000003 /* DayRecord.swift */; };
+		AA3000000000000000000004 /* DayStatePersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB3000000000000000000004 /* DayStatePersistenceTests.swift */; };
+		AA3000000000000000000005 /* DayStateEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB3000000000000000000005 /* DayStateEditor.swift */; };
+		AA3000000000000000000006 /* AppModelDayStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB3000000000000000000006 /* AppModelDayStateTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -108,6 +114,12 @@
 		BB200000000000000000000D /* VoiceDomainTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceDomainTests.swift; sourceTree = "<group>"; };
 		BB200000000000000000000E /* FileAudioLibraryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileAudioLibraryTests.swift; sourceTree = "<group>"; };
 		BB200000000000000000000F /* AppModelVoiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModelVoiceTests.swift; sourceTree = "<group>"; };
+		BB3000000000000000000001 /* DailyFeeling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyFeeling.swift; sourceTree = "<group>"; };
+		BB3000000000000000000002 /* DayState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayState.swift; sourceTree = "<group>"; };
+		BB3000000000000000000003 /* DayRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayRecord.swift; sourceTree = "<group>"; };
+		BB3000000000000000000004 /* DayStatePersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayStatePersistenceTests.swift; sourceTree = "<group>"; };
+		BB3000000000000000000005 /* DayStateEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayStateEditor.swift; sourceTree = "<group>"; };
+		BB3000000000000000000006 /* AppModelDayStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModelDayStateTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -184,6 +196,8 @@
 			isa = PBXGroup;
 			children = (
 				BB0000000000000000000001 /* DayKey.swift */,
+				BB3000000000000000000001 /* DailyFeeling.swift */,
+				BB3000000000000000000002 /* DayState.swift */,
 				BB0000000000000000000002 /* Entry.swift */,
 			);
 			path = Domain;
@@ -230,6 +244,7 @@
 				BB0000000000000000000004 /* EntryRecord.swift */,
 				BB1000000000000000000002 /* PhotoAttachmentRecord.swift */,
 				BB2000000000000000000001 /* VoiceAttachmentRecord.swift */,
+				BB3000000000000000000003 /* DayRecord.swift */,
 				BB0000000000000000000005 /* ModelContainerFactory.swift */,
 				BB0000000000000000000006 /* SwiftDataDayWorkspace.swift */,
 			);
@@ -267,6 +282,7 @@
 			isa = PBXGroup;
 			children = (
 				BB0000000000000000000010 /* TodayView.swift */,
+				BB3000000000000000000005 /* DayStateEditor.swift */,
 			);
 			path = Today;
 			sourceTree = "<group>";
@@ -300,6 +316,8 @@
 				BB200000000000000000000D /* VoiceDomainTests.swift */,
 				BB200000000000000000000E /* FileAudioLibraryTests.swift */,
 				BB200000000000000000000F /* AppModelVoiceTests.swift */,
+				BB3000000000000000000004 /* DayStatePersistenceTests.swift */,
+				BB3000000000000000000006 /* AppModelDayStateTests.swift */,
 			);
 			path = LifeNotesTests;
 			sourceTree = "<group>";
@@ -500,6 +518,8 @@
 				AA000000000000000000000B /* PrivacyGateModel.swift in Sources */,
 				AA000000000000000000000C /* PrivacyGateView.swift in Sources */,
 				AA0000000000000000000001 /* DayKey.swift in Sources */,
+				AA3000000000000000000001 /* DailyFeeling.swift in Sources */,
+				AA3000000000000000000002 /* DayState.swift in Sources */,
 				AA0000000000000000000002 /* Entry.swift in Sources */,
 				AA0000000000000000000003 /* DayWorkspace.swift in Sources */,
 				AA1000000000000000000001 /* PhotoLibrary.swift in Sources */,
@@ -511,6 +531,7 @@
 				AA0000000000000000000004 /* EntryRecord.swift in Sources */,
 				AA1000000000000000000002 /* PhotoAttachmentRecord.swift in Sources */,
 				AA2000000000000000000001 /* VoiceAttachmentRecord.swift in Sources */,
+				AA3000000000000000000003 /* DayRecord.swift in Sources */,
 				AA0000000000000000000005 /* ModelContainerFactory.swift in Sources */,
 				AA0000000000000000000006 /* SwiftDataDayWorkspace.swift in Sources */,
 				AA0000000000000000000007 /* LocalUserIdentity.swift in Sources */,
@@ -523,6 +544,7 @@
 				AA000000000000000000000F /* CaptureView.swift in Sources */,
 				AA200000000000000000000C /* VoiceCaptureCard.swift in Sources */,
 				AA0000000000000000000010 /* TodayView.swift in Sources */,
+				AA3000000000000000000005 /* DayStateEditor.swift in Sources */,
 				AA1000000000000000000004 /* PhotoAssetView.swift in Sources */,
 				AA200000000000000000000B /* VoicePlaybackView.swift in Sources */,
 				AA0000000000000000000009 /* AppTheme.swift in Sources */,
@@ -544,6 +566,8 @@
 				AA200000000000000000000D /* VoiceDomainTests.swift in Sources */,
 				AA200000000000000000000E /* FileAudioLibraryTests.swift in Sources */,
 				AA200000000000000000000F /* AppModelVoiceTests.swift in Sources */,
+				AA3000000000000000000004 /* DayStatePersistenceTests.swift in Sources */,
+				AA3000000000000000000006 /* AppModelDayStateTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

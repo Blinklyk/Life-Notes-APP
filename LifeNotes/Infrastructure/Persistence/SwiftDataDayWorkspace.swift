@@ -4,6 +4,8 @@ import SwiftData
 
 @ModelActor
 actor SwiftDataDayWorkspace: DayWorkspace {
+    private static let dayStateMutationLock = NSLock()
+
     func create(
         _ draft: NewEntry,
         userID: UUID,
@@ -131,6 +133,44 @@ actor SwiftDataDayWorkspace: DayWorkspace {
                 return lhs.createdAt > rhs.createdAt
             }
             return lhs.id.uuidString > rhs.id.uuidString
+        }
+    }
+
+    func dayState(for day: DayKey, userID: UUID) async throws -> DayState {
+        guard let record = try dayRecord(for: day, userID: userID) else {
+            return DayState(dayKey: day)
+        }
+        return try record.domainState(
+            expectedUserID: userID,
+            expectedDayKey: day
+        )
+    }
+
+    func setFeeling(
+        _ feeling: DailyFeeling?,
+        for day: DayKey,
+        userID: UUID,
+        updatedAt: Date
+    ) async throws -> DayState {
+        try Self.dayStateMutationLock.withLock {
+            try mutateDayRecord(for: day, userID: userID) { record in
+                record.feelingRawValue = feeling?.rawValue
+                record.feelingUpdatedAt = updatedAt
+            }
+        }
+    }
+
+    func setImportant(
+        _ isImportant: Bool,
+        for day: DayKey,
+        userID: UUID,
+        updatedAt: Date
+    ) async throws -> DayState {
+        try Self.dayStateMutationLock.withLock {
+            try mutateDayRecord(for: day, userID: userID) { record in
+                record.isImportant = isImportant
+                record.importantUpdatedAt = updatedAt
+            }
         }
     }
 
@@ -267,6 +307,71 @@ actor SwiftDataDayWorkspace: DayWorkspace {
             photos: sortedPhotoRecords(photos).map { $0.domainAttachment() },
             voices: sortedVoiceRecords(voices).map { try $0.domainAttachment() }
         )
+    }
+
+    private func dayRecord(
+        for day: DayKey,
+        userID: UUID
+    ) throws -> DayRecord? {
+        let requestedScopeKey = DayRecord.makeScopeKey(userID: userID, dayKey: day)
+        var descriptor = FetchDescriptor<DayRecord>(
+            predicate: #Predicate<DayRecord> { record in
+                record.scopeKey == requestedScopeKey
+            }
+        )
+        descriptor.fetchLimit = 1
+        return try modelContext.fetch(descriptor).first
+    }
+
+    private func existingOrNewDayRecord(
+        for day: DayKey,
+        userID: UUID
+    ) throws -> (record: DayRecord, isNew: Bool) {
+        if let existingRecord = try dayRecord(for: day, userID: userID) {
+            return (existingRecord, false)
+        }
+
+        let record = DayRecord(
+            scopeKey: DayRecord.makeScopeKey(userID: userID, dayKey: day),
+            userID: userID,
+            dayKeyRawValue: day.storageValue
+        )
+        modelContext.insert(record)
+        return (record, true)
+    }
+
+    private func mutateDayRecord(
+        for day: DayKey,
+        userID: UUID,
+        mutation: (DayRecord) -> Void
+    ) throws -> DayState {
+        for attempt in 0..<2 {
+            let result = try existingOrNewDayRecord(for: day, userID: userID)
+            _ = try result.record.domainState(
+                expectedUserID: userID,
+                expectedDayKey: day
+            )
+            mutation(result.record)
+            let state = try result.record.domainState(
+                expectedUserID: userID,
+                expectedDayKey: day
+            )
+
+            do {
+                try modelContext.save()
+                return state
+            } catch {
+                modelContext.rollback()
+                guard
+                    attempt == 0,
+                    result.isNew,
+                    try dayRecord(for: day, userID: userID) != nil
+                else {
+                    throw error
+                }
+            }
+        }
+        preconditionFailure("每日状态更新重试次数异常")
     }
 
     private func sortedPhotoRecords(

@@ -62,9 +62,11 @@ final class AppModel: ObservableObject {
     @Published private(set) var voicePlaybackProgress = 0.0
     @Published private(set) var route: Route = .capture
     @Published private(set) var entries: [Entry] = []
+    @Published private(set) var dayState: DayState
     @Published private(set) var todayDate: Date
     @Published private(set) var todayTimeZone: TimeZone
     @Published private(set) var isLoadingToday = false
+    @Published private(set) var isUpdatingDayState = false
     @Published private(set) var isSaving = false
     @Published private(set) var isRestoringDraft = true
     @Published private(set) var isCaptureDraftAvailable = true
@@ -97,6 +99,9 @@ final class AppModel: ObservableObject {
     private var draftVoiceTranscriptionGeneration = 0
     private var savedVoiceTranscriptionGeneration = 0
     private var playbackGeneration = 0
+    private var todayRefreshGeneration = 0
+    private var dayStatePublicationGeneration = 0
+    private var dayStateMutationGeneration = 0
 
     init(
         workspace: any DayWorkspace,
@@ -122,8 +127,12 @@ final class AppModel: ObservableObject {
         self.currentTimeZone = currentTimeZone
 
         let initialDate = now()
+        let initialTimeZone = currentTimeZone()
         todayDate = initialDate
-        todayTimeZone = currentTimeZone()
+        todayTimeZone = initialTimeZone
+        dayState = DayState(
+            dayKey: DayKey(containing: initialDate, in: initialTimeZone)
+        )
         self.voiceRecorder.onRecordingInterrupted = { [weak self] in
             self?.handleVoiceRecordingInterruption()
         }
@@ -995,16 +1004,114 @@ final class AppModel: ObservableObject {
         let timeZone = currentTimeZone()
         let dayKey = DayKey(containing: date, in: timeZone)
 
+        todayRefreshGeneration += 1
+        let generation = todayRefreshGeneration
+        let dayStateGeneration = dayStatePublicationGeneration
         isLoadingToday = true
-        defer { isLoadingToday = false }
+        defer {
+            if todayRefreshGeneration == generation {
+                isLoadingToday = false
+            }
+        }
 
         do {
-            entries = try await workspace.entries(for: dayKey, userID: userID)
+            async let loadedEntries = workspace.entries(for: dayKey, userID: userID)
+            async let loadedDayState = workspace.dayState(for: dayKey, userID: userID)
+            let (entries, dayState) = try await (loadedEntries, loadedDayState)
+            guard todayRefreshGeneration == generation else {
+                return
+            }
+            self.entries = entries
+            if self.dayState.dayKey != dayKey
+                || dayStatePublicationGeneration == dayStateGeneration {
+                if self.dayState.dayKey != dayKey {
+                    dayStateMutationGeneration += 1
+                    isUpdatingDayState = false
+                }
+                dayStatePublicationGeneration += 1
+                self.dayState = dayState
+            }
             todayDate = date
             todayTimeZone = timeZone
         } catch {
-            if showError {
+            if showError, todayRefreshGeneration == generation {
                 alert = Alert(message: "暂时无法读取今天的记录，请稍后重试。")
+            }
+        }
+    }
+
+    func setFeeling(_ feeling: DailyFeeling?) async {
+        guard !isUpdatingDayState, dayState.feeling != feeling else {
+            return
+        }
+
+        let dayKey = dayState.dayKey
+        dayStateMutationGeneration += 1
+        let mutationGeneration = dayStateMutationGeneration
+        isUpdatingDayState = true
+        defer {
+            if dayStateMutationGeneration == mutationGeneration {
+                isUpdatingDayState = false
+            }
+        }
+
+        do {
+            let updatedState = try await workspace.setFeeling(
+                feeling,
+                for: dayKey,
+                userID: userID,
+                updatedAt: now()
+            )
+            guard
+                dayStateMutationGeneration == mutationGeneration,
+                dayState.dayKey == dayKey
+            else {
+                return
+            }
+            dayStatePublicationGeneration += 1
+            dayState = updatedState
+        } catch {
+            if dayStateMutationGeneration == mutationGeneration,
+               dayState.dayKey == dayKey {
+                alert = Alert(message: "暂时无法保存每日感受，请稍后重试。")
+            }
+        }
+    }
+
+    func setImportant(_ isImportant: Bool) async {
+        guard !isUpdatingDayState, dayState.isImportant != isImportant else {
+            return
+        }
+
+        let dayKey = dayState.dayKey
+        dayStateMutationGeneration += 1
+        let mutationGeneration = dayStateMutationGeneration
+        isUpdatingDayState = true
+        defer {
+            if dayStateMutationGeneration == mutationGeneration {
+                isUpdatingDayState = false
+            }
+        }
+
+        do {
+            let updatedState = try await workspace.setImportant(
+                isImportant,
+                for: dayKey,
+                userID: userID,
+                updatedAt: now()
+            )
+            guard
+                dayStateMutationGeneration == mutationGeneration,
+                dayState.dayKey == dayKey
+            else {
+                return
+            }
+            dayStatePublicationGeneration += 1
+            dayState = updatedState
+        } catch {
+            if dayStateMutationGeneration == mutationGeneration,
+               dayState.dayKey == dayKey {
+                alert = Alert(message: "暂时无法保存重要日标记，请稍后重试。")
             }
         }
     }

@@ -712,6 +712,7 @@ private actor VoiceTestDayWorkspace: DayWorkspace {
     private let operationLog: VoiceTestOperationLog?
     private var drafts: [NewEntry] = []
     private var storedEntries: [Entry] = []
+    private var dayStates: [String: DayState] = [:]
 
     init(
         shouldFailCreate: Bool = false,
@@ -771,6 +772,48 @@ private actor VoiceTestDayWorkspace: DayWorkspace {
             .sorted { $0.createdAt > $1.createdAt }
     }
 
+    func dayState(for day: DayKey, userID: UUID) async throws -> DayState {
+        dayStates[dayStateKey(day: day, userID: userID)] ?? DayState(dayKey: day)
+    }
+
+    func setFeeling(
+        _ feeling: DailyFeeling?,
+        for day: DayKey,
+        userID: UUID,
+        updatedAt: Date
+    ) async throws -> DayState {
+        let key = dayStateKey(day: day, userID: userID)
+        let current = dayStates[key] ?? DayState(dayKey: day)
+        let updated = DayState(
+            dayKey: day,
+            feeling: feeling,
+            isImportant: current.isImportant,
+            feelingUpdatedAt: updatedAt,
+            importantUpdatedAt: current.importantUpdatedAt
+        )
+        dayStates[key] = updated
+        return updated
+    }
+
+    func setImportant(
+        _ isImportant: Bool,
+        for day: DayKey,
+        userID: UUID,
+        updatedAt: Date
+    ) async throws -> DayState {
+        let key = dayStateKey(day: day, userID: userID)
+        let current = dayStates[key] ?? DayState(dayKey: day)
+        let updated = DayState(
+            dayKey: day,
+            feeling: current.feeling,
+            isImportant: isImportant,
+            feelingUpdatedAt: current.feelingUpdatedAt,
+            importantUpdatedAt: updatedAt
+        )
+        dayStates[key] = updated
+        return updated
+    }
+
     func hasCommittedDraft(id: UUID, userID: UUID) async throws -> Bool {
         storedEntries.contains { $0.userID == userID && $0.sourceDraftID == id }
     }
@@ -812,6 +855,10 @@ private actor VoiceTestDayWorkspace: DayWorkspace {
     }
 
     func createdDrafts() -> [NewEntry] { drafts }
+
+    private func dayStateKey(day: DayKey, userID: UUID) -> String {
+        "\(userID.uuidString):\(day.storageValue)"
+    }
 }
 
 private actor VoiceTestAudioLibrary: AudioLibrary {

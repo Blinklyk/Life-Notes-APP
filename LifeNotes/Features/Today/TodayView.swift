@@ -16,6 +16,18 @@ struct TodayView: View {
                     isTitleFocused: $isTitleFocused
                 )
 
+                DayStateEditor(
+                    dayState: appModel.dayState,
+                    isSaving: appModel.isUpdatingDayState || appModel.isLoadingToday,
+                    onSetFeeling: { feeling in
+                        await appModel.setFeeling(feeling)
+                    },
+                    onSetImportant: { isImportant in
+                        await appModel.setImportant(isImportant)
+                    }
+                )
+                .padding(.top, 20)
+
                 HStack(alignment: .firstTextBaseline) {
                     Text("随心记录")
                         .font(.headline)
@@ -25,7 +37,7 @@ struct TodayView: View {
                         .font(.caption)
                         .foregroundStyle(AppTheme.mutedInk)
                 }
-                .padding(.top, 32)
+                .padding(.top, 28)
                 .accessibilityElement(children: .combine)
 
                 if appModel.isLoadingToday && appModel.entries.isEmpty {

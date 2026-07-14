@@ -6,6 +6,8 @@ enum PersistenceMappingError: LocalizedError {
     case invalidVoiceTranscriptionStatus(String)
     case invalidVoiceTranscriptionSource(String)
     case invalidVoiceStorageReference(String)
+    case invalidDailyFeeling(Int)
+    case invalidDayRecordScope(String)
 
     var errorDescription: String? {
         switch self {
@@ -17,6 +19,10 @@ enum PersistenceMappingError: LocalizedError {
             return "本地记录包含无效的语音转写来源：\(value)。"
         case let .invalidVoiceStorageReference(value):
             return "本地记录包含无效的语音文件引用：\(value)。"
+        case let .invalidDailyFeeling(value):
+            return "本地记录包含无效的每日感受：\(value)。"
+        case let .invalidDayRecordScope(value):
+            return "本地记录包含无效的每日状态范围：\(value)。"
         }
     }
 }

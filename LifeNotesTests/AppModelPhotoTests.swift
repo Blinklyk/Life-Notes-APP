@@ -404,6 +404,7 @@ private actor FakeDayWorkspace: DayWorkspace {
     private var allPhotoIDCalls = 0
     private var drafts: [NewEntry] = []
     private var storedEntries: [Entry] = []
+    private var dayStates: [String: DayState] = [:]
 
     init(
         shouldFailEntries: Bool = false,
@@ -461,6 +462,48 @@ private actor FakeDayWorkspace: DayWorkspace {
         return storedEntries
             .filter { $0.dayKey == day && $0.userID == userID }
             .sorted { $0.createdAt > $1.createdAt }
+    }
+
+    func dayState(for day: DayKey, userID: UUID) async throws -> DayState {
+        dayStates[dayStateKey(day: day, userID: userID)] ?? DayState(dayKey: day)
+    }
+
+    func setFeeling(
+        _ feeling: DailyFeeling?,
+        for day: DayKey,
+        userID: UUID,
+        updatedAt: Date
+    ) async throws -> DayState {
+        let key = dayStateKey(day: day, userID: userID)
+        let current = dayStates[key] ?? DayState(dayKey: day)
+        let updated = DayState(
+            dayKey: day,
+            feeling: feeling,
+            isImportant: current.isImportant,
+            feelingUpdatedAt: updatedAt,
+            importantUpdatedAt: current.importantUpdatedAt
+        )
+        dayStates[key] = updated
+        return updated
+    }
+
+    func setImportant(
+        _ isImportant: Bool,
+        for day: DayKey,
+        userID: UUID,
+        updatedAt: Date
+    ) async throws -> DayState {
+        let key = dayStateKey(day: day, userID: userID)
+        let current = dayStates[key] ?? DayState(dayKey: day)
+        let updated = DayState(
+            dayKey: day,
+            feeling: current.feeling,
+            isImportant: isImportant,
+            feelingUpdatedAt: current.feelingUpdatedAt,
+            importantUpdatedAt: updatedAt
+        )
+        dayStates[key] = updated
+        return updated
     }
 
     func photoIDs(userID: UUID) async throws -> Set<UUID> {
@@ -525,6 +568,10 @@ private actor FakeDayWorkspace: DayWorkspace {
 
     func createdDrafts() -> [NewEntry] {
         drafts
+    }
+
+    private func dayStateKey(day: DayKey, userID: UUID) -> String {
+        "\(userID.uuidString):\(day.storageValue)"
     }
 }
 
