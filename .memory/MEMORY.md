@@ -232,3 +232,33 @@
 
 - 五瓣花与重要日控件已覆盖布局回退、44pt 点击区域和 VoiceOver 语义，但仍需在真机补 Dynamic Type、VoiceOver 与跨日本地时间人工验收。
 - 当前仅在今天页编辑每日状态；下一阶段实现月历、日期详情和历史日期的五瓣花回看。
+
+## 2026-07-15：月历、日期详情与五瓣花回看闭环
+
+### 用户要求
+
+- 继续实现初代全部功能，本阶段完成日历与五瓣花满意度，并提供历史日期详情。
+- 每完成一项更新 `README.md` 和项目 memory，并创建一次中文 Conventional Commit。
+
+### 本次实际修改
+
+- 新增 `CalendarMonth`、`CalendarDaySummary` 和 `DayDetail`，支持闰年、跨年、周一开头固定 42 格及相邻月份日期。
+- `DayWorkspace` 新增范围摘要与日期详情接口；SwiftData 用一次记录查询和一次每日状态查询聚合可见 42 天，不逐日读取媒体。
+- 新增独立 `CalendarModel` 管理切月、详情和历史日状态更新；月份、详情、摘要 publication 及按日期 mutation generation 处理快速切换、迟到响应和 A→B→A 竞态。
+- 新增原生月历、日期格和历史详情；日期格分别呈现记录点、五瓣花、重要日爱心和日记文档标记，VoiceOver 播报日期、数量、感受级别与标记。
+- 今天和日历接入统一底部导航；日期详情复用完整图文/语音时间线，历史记录暂时只读，每日感受和重要日可修改并即时同步摘要。
+- 时间线按每条记录固化的创建时区显示时间；切月加载期间禁用旧日期格，避免旧网格详情被新月份结果清空。
+- 补齐月份计算、范围边界、用户隔离、损坏数据、完整附件详情、快速切月/切日、迟到月/详情刷新、相邻月日期和跨日期保存测试。
+
+### 验证
+
+- 全量 Swift parse、`plutil -lint LifeNotes.xcodeproj/project.pbxproj` 与 `git diff --check` 通过。
+- Xcode 26.6、Apple Swift 6.3.3 下以 Swift 6 严格并发和 warnings-as-errors 完成构建及全量测试。
+- iPhone 17 Pro Max / iOS 26.5 Simulator 执行 117 项测试，117 项通过；结果包为 `/tmp/LifeNotesCalendarFinalTests3.xcresult`。
+- 定向 CalendarModel P1 竞态测试 9 项通过；结果包为 `/tmp/LifeNotesCalendarP1Tests.xcresult`。
+
+### 风险与待办
+
+- 最新构建已安装到 Simulator，但系统身份验证停在“输入 iPhone 密码”；`Matching Face` 不能越过该密码页，尚未完成人工点击月历、Dynamic Type 和 VoiceOver 检查。
+- 人工验收前需在 Simulator 的 `Features > Face ID > Enrolled` 启用模拟 Face ID 后重新认证，或输入该模拟器密码；真机仍需检查实际 Face ID 与创建时区显示。
+- 下一阶段实现随心日记生成接口、编辑和历史版本，并让月历的日记文档标记接入真实数据。

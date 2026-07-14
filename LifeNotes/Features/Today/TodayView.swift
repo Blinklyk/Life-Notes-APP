@@ -85,7 +85,12 @@ struct TodayView: View {
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            NewEntryBar(onNewEntry: { appModel.showCapture() })
+            MainTabBar(
+                selection: .today,
+                onToday: {},
+                onNewEntry: { appModel.showCapture() },
+                onCalendar: { appModel.showCalendar() }
+            )
         }
         .animation(.easeInOut(duration: 0.2), value: appModel.notice)
         .task {
@@ -156,13 +161,14 @@ private struct TodayHeader: View {
     }
 }
 
-private struct EntryTimeline: View {
+struct EntryTimeline: View {
     let entries: [Entry]
     let timeZone: TimeZone
     @ObservedObject var appModel: AppModel
     let photoLibrary: any PhotoLibrary
     let onOpenPhoto: (PhotoAttachment, Int) -> Void
     let onEditVoice: (VoiceAttachment) -> Void
+    var allowsVoiceEditing = true
 
     var body: some View {
         LazyVStack(spacing: 12) {
@@ -174,7 +180,8 @@ private struct EntryTimeline: View {
                     appModel: appModel,
                     photoLibrary: photoLibrary,
                     onOpenPhoto: onOpenPhoto,
-                    onEditVoice: onEditVoice
+                    onEditVoice: onEditVoice,
+                    allowsVoiceEditing: allowsVoiceEditing
                 )
             }
         }
@@ -189,6 +196,7 @@ private struct EntryTimelineRow: View {
     let photoLibrary: any PhotoLibrary
     let onOpenPhoto: (PhotoAttachment, Int) -> Void
     let onEditVoice: (VoiceAttachment) -> Void
+    let allowsVoiceEditing: Bool
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -212,13 +220,13 @@ private struct EntryTimelineRow: View {
             .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 8) {
-                Text(AppDateFormatting.entryTime(entry.createdAt, timeZone: timeZone))
+                Text(AppDateFormatting.entryTime(entry.createdAt, timeZone: entryTimeZone))
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(AppTheme.sage)
                     .accessibilityLabel(
                         AppDateFormatting.accessibleEntryTime(
                             entry.createdAt,
-                            timeZone: timeZone
+                            timeZone: entryTimeZone
                         )
                     )
 
@@ -245,7 +253,8 @@ private struct EntryTimelineRow: View {
                                 voice: voice,
                                 photoPosition: index + 1,
                                 isOrphaned: false,
-                                onEdit: { onEditVoice(voice) }
+                                onEdit: { onEditVoice(voice) },
+                                allowsVoiceEditing: allowsVoiceEditing
                             )
                         }
                     }
@@ -256,7 +265,8 @@ private struct EntryTimelineRow: View {
                         GlobalVoiceView(
                             appModel: appModel,
                             voice: voice,
-                            onEdit: { onEditVoice(voice) }
+                            onEdit: { onEditVoice(voice) },
+                            allowsVoiceEditing: allowsVoiceEditing
                         )
                     } else {
                         PhotoVoiceAnnotationView(
@@ -264,7 +274,8 @@ private struct EntryTimelineRow: View {
                             voice: voice,
                             photoPosition: nil,
                             isOrphaned: true,
-                            onEdit: { onEditVoice(voice) }
+                            onEdit: { onEditVoice(voice) },
+                            allowsVoiceEditing: allowsVoiceEditing
                         )
                     }
                 }
@@ -282,6 +293,10 @@ private struct EntryTimelineRow: View {
 
     private var photoIDs: Set<UUID> {
         Set(entry.photos.map(\.id))
+    }
+
+    private var entryTimeZone: TimeZone {
+        TimeZone(identifier: entry.creationTimeZoneIdentifier) ?? timeZone
     }
 
     private var unattachedVoices: [VoiceAttachment] {
@@ -302,6 +317,7 @@ private struct GlobalVoiceView: View {
     @ObservedObject var appModel: AppModel
     let voice: VoiceAttachment
     let onEdit: () -> Void
+    let allowsVoiceEditing: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -312,7 +328,8 @@ private struct GlobalVoiceView: View {
             EntryVoiceView(
                 appModel: appModel,
                 voice: voice,
-                onEdit: onEdit
+                onEdit: onEdit,
+                allowsVoiceEditing: allowsVoiceEditing
             )
         }
         .accessibilityElement(children: .contain)
@@ -325,6 +342,7 @@ private struct PhotoVoiceAnnotationView: View {
     let photoPosition: Int?
     let isOrphaned: Bool
     let onEdit: () -> Void
+    let allowsVoiceEditing: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -339,7 +357,8 @@ private struct PhotoVoiceAnnotationView: View {
             EntryVoiceView(
                 appModel: appModel,
                 voice: voice,
-                onEdit: onEdit
+                onEdit: onEdit,
+                allowsVoiceEditing: allowsVoiceEditing
             )
         }
         .padding(.leading, 12)
@@ -364,6 +383,7 @@ private struct EntryVoiceView: View {
     @ObservedObject var appModel: AppModel
     let voice: VoiceAttachment
     let onEdit: () -> Void
+    let allowsVoiceEditing: Bool
 
     private var isTranscribing: Bool {
         appModel.transcribingSavedVoiceIDs.contains(voice.id)
@@ -401,7 +421,7 @@ private struct EntryVoiceView: View {
 
                 Spacer(minLength: 12)
 
-                if canRetry {
+                if allowsVoiceEditing, canRetry {
                     Button {
                         appModel.retrySavedVoiceTranscription(voice)
                     } label: {
@@ -413,15 +433,17 @@ private struct EntryVoiceView: View {
                     .help("重试转写")
                 }
 
-                Button(action: onEdit) {
-                    Image(systemName: "pencil")
-                        .frame(width: 44, height: 44)
+                if allowsVoiceEditing {
+                    Button(action: onEdit) {
+                        Image(systemName: "pencil")
+                            .frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isTranscribing)
+                    .accessibilityLabel("编辑语音转写")
+                    .accessibilityHint(isTranscribing ? "转写完成后可以编辑" : "")
+                    .help("编辑转写")
                 }
-                .buttonStyle(.plain)
-                .disabled(isTranscribing)
-                .accessibilityLabel("编辑语音转写")
-                .accessibilityHint(isTranscribing ? "转写完成后可以编辑" : "")
-                .help("编辑转写")
             }
 
             if !voice.transcriptText.isEmpty {
@@ -485,7 +507,7 @@ private struct EntryVoiceView: View {
     }
 }
 
-private struct VoiceTranscriptEditor: View {
+struct VoiceTranscriptEditor: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var appModel: AppModel
     let voice: VoiceAttachment
@@ -593,28 +615,5 @@ private struct TodayEmptyState: View {
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
-    }
-}
-
-private struct NewEntryBar: View {
-    let onNewEntry: () -> Void
-
-    var body: some View {
-        VStack(spacing: 0) {
-            Divider()
-                .overlay(AppTheme.divider)
-
-            Button(action: onNewEntry) {
-                Label("立即记录", systemImage: "plus")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity, minHeight: 52)
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.white)
-            .background(AppTheme.ink, in: RoundedRectangle(cornerRadius: 12))
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
-        }
-        .background(.ultraThinMaterial)
     }
 }

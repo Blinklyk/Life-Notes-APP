@@ -40,7 +40,7 @@ struct DayStateEditor: View {
                             setFeeling(feeling)
                         } label: {
                             HStack(spacing: 12) {
-                                DayFeelingFlower(level: feeling.level)
+                                FeelingFlower(level: feeling.level)
 
                                 Text(feeling.label)
                                     .font(.body)
@@ -122,7 +122,7 @@ struct DayStateEditor: View {
             isFeelingPickerPresented = true
         } label: {
             HStack(spacing: 8) {
-                DayFeelingFlower(level: dayState.feeling?.level ?? 0)
+                FeelingFlower(level: dayState.feeling?.level ?? 0)
 
                 Text(feelingButtonTitle)
                     .font(.callout.weight(.semibold))
@@ -256,38 +256,5 @@ struct DayStateEditor: View {
             pendingImportantValue = nil
             isSettingImportant = false
         }
-    }
-}
-
-private struct DayFeelingFlower: View {
-    let level: Int
-
-    @ScaledMetric(relativeTo: .body) private var scaledSize: CGFloat = 22
-
-    var body: some View {
-        let size = min(scaledSize, 30)
-
-        ZStack {
-            ForEach(0..<5, id: \.self) { index in
-                Capsule()
-                    .fill(index < level ? AppTheme.accent : Color.clear)
-                    .overlay {
-                        Capsule()
-                            .stroke(
-                                index < level ? AppTheme.accent : AppTheme.divider,
-                                lineWidth: 1
-                            )
-                    }
-                    .frame(width: size * 0.24, height: size * 0.43)
-                    .offset(y: -size * 0.2)
-                    .rotationEffect(.degrees(Double(index) * 72))
-            }
-
-            Circle()
-                .fill(level > 0 ? AppTheme.accent : AppTheme.divider)
-                .frame(width: size * 0.18, height: size * 0.18)
-        }
-        .frame(width: size, height: size)
-        .accessibilityHidden(true)
     }
 }

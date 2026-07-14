@@ -56,6 +56,18 @@
 		AA3000000000000000000004 /* DayStatePersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB3000000000000000000004 /* DayStatePersistenceTests.swift */; };
 		AA3000000000000000000005 /* DayStateEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB3000000000000000000005 /* DayStateEditor.swift */; };
 		AA3000000000000000000006 /* AppModelDayStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB3000000000000000000006 /* AppModelDayStateTests.swift */; };
+		AA4000000000000000000001 /* CalendarMonth.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB4000000000000000000001 /* CalendarMonth.swift */; };
+		AA4000000000000000000002 /* CalendarDaySummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB4000000000000000000002 /* CalendarDaySummary.swift */; };
+		AA4000000000000000000003 /* DayDetail.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB4000000000000000000003 /* DayDetail.swift */; };
+		AA4000000000000000000004 /* CalendarModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB4000000000000000000004 /* CalendarModel.swift */; };
+		AA4000000000000000000005 /* CalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB4000000000000000000005 /* CalendarView.swift */; };
+		AA4000000000000000000006 /* MonthGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB4000000000000000000006 /* MonthGridView.swift */; };
+		AA4000000000000000000007 /* DayDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB4000000000000000000007 /* DayDetailView.swift */; };
+		AA4000000000000000000008 /* FeelingFlower.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB4000000000000000000008 /* FeelingFlower.swift */; };
+		AA4000000000000000000009 /* MainTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB4000000000000000000009 /* MainTabBar.swift */; };
+		AA400000000000000000000A /* CalendarMonthTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB400000000000000000000A /* CalendarMonthTests.swift */; };
+		AA400000000000000000000B /* CalendarPersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB400000000000000000000B /* CalendarPersistenceTests.swift */; };
+		AA400000000000000000000C /* CalendarModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB400000000000000000000C /* CalendarModelTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -120,6 +132,18 @@
 		BB3000000000000000000004 /* DayStatePersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayStatePersistenceTests.swift; sourceTree = "<group>"; };
 		BB3000000000000000000005 /* DayStateEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayStateEditor.swift; sourceTree = "<group>"; };
 		BB3000000000000000000006 /* AppModelDayStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModelDayStateTests.swift; sourceTree = "<group>"; };
+		BB4000000000000000000001 /* CalendarMonth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarMonth.swift; sourceTree = "<group>"; };
+		BB4000000000000000000002 /* CalendarDaySummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarDaySummary.swift; sourceTree = "<group>"; };
+		BB4000000000000000000003 /* DayDetail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayDetail.swift; sourceTree = "<group>"; };
+		BB4000000000000000000004 /* CalendarModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarModel.swift; sourceTree = "<group>"; };
+		BB4000000000000000000005 /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarView.swift; sourceTree = "<group>"; };
+		BB4000000000000000000006 /* MonthGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonthGridView.swift; sourceTree = "<group>"; };
+		BB4000000000000000000007 /* DayDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayDetailView.swift; sourceTree = "<group>"; };
+		BB4000000000000000000008 /* FeelingFlower.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeelingFlower.swift; sourceTree = "<group>"; };
+		BB4000000000000000000009 /* MainTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabBar.swift; sourceTree = "<group>"; };
+		BB400000000000000000000A /* CalendarMonthTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarMonthTests.swift; sourceTree = "<group>"; };
+		BB400000000000000000000B /* CalendarPersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarPersistenceTests.swift; sourceTree = "<group>"; };
+		BB400000000000000000000C /* CalendarModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarModelTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -196,6 +220,9 @@
 			isa = PBXGroup;
 			children = (
 				BB0000000000000000000001 /* DayKey.swift */,
+				BB4000000000000000000001 /* CalendarMonth.swift */,
+				BB4000000000000000000002 /* CalendarDaySummary.swift */,
+				BB4000000000000000000003 /* DayDetail.swift */,
 				BB3000000000000000000001 /* DailyFeeling.swift */,
 				BB3000000000000000000002 /* DayState.swift */,
 				BB0000000000000000000002 /* Entry.swift */,
@@ -264,6 +291,7 @@
 			children = (
 				CC000000000000000000000C /* Capture */,
 				CC000000000000000000000D /* Today */,
+				CC4000000000000000000001 /* Calendar */,
 				CC1000000000000000000003 /* Shared */,
 			);
 			path = Features;
@@ -287,10 +315,22 @@
 			path = Today;
 			sourceTree = "<group>";
 		};
+		CC4000000000000000000001 /* Calendar */ = {
+			isa = PBXGroup;
+			children = (
+				BB4000000000000000000004 /* CalendarModel.swift */,
+				BB4000000000000000000005 /* CalendarView.swift */,
+				BB4000000000000000000006 /* MonthGridView.swift */,
+				BB4000000000000000000007 /* DayDetailView.swift */,
+			);
+			path = Calendar;
+			sourceTree = "<group>";
+		};
 		CC000000000000000000000E /* DesignSystem */ = {
 			isa = PBXGroup;
 			children = (
 				BB0000000000000000000009 /* AppTheme.swift */,
+				BB4000000000000000000009 /* MainTabBar.swift */,
 			);
 			path = DesignSystem;
 			sourceTree = "<group>";
@@ -318,6 +358,9 @@
 				BB200000000000000000000F /* AppModelVoiceTests.swift */,
 				BB3000000000000000000004 /* DayStatePersistenceTests.swift */,
 				BB3000000000000000000006 /* AppModelDayStateTests.swift */,
+				BB400000000000000000000A /* CalendarMonthTests.swift */,
+				BB400000000000000000000B /* CalendarPersistenceTests.swift */,
+				BB400000000000000000000C /* CalendarModelTests.swift */,
 			);
 			path = LifeNotesTests;
 			sourceTree = "<group>";
@@ -344,6 +387,7 @@
 			children = (
 				BB1000000000000000000004 /* PhotoAssetView.swift */,
 				BB200000000000000000000B /* VoicePlaybackView.swift */,
+				BB4000000000000000000008 /* FeelingFlower.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -518,6 +562,9 @@
 				AA000000000000000000000B /* PrivacyGateModel.swift in Sources */,
 				AA000000000000000000000C /* PrivacyGateView.swift in Sources */,
 				AA0000000000000000000001 /* DayKey.swift in Sources */,
+				AA4000000000000000000001 /* CalendarMonth.swift in Sources */,
+				AA4000000000000000000002 /* CalendarDaySummary.swift in Sources */,
+				AA4000000000000000000003 /* DayDetail.swift in Sources */,
 				AA3000000000000000000001 /* DailyFeeling.swift in Sources */,
 				AA3000000000000000000002 /* DayState.swift in Sources */,
 				AA0000000000000000000002 /* Entry.swift in Sources */,
@@ -545,9 +592,15 @@
 				AA200000000000000000000C /* VoiceCaptureCard.swift in Sources */,
 				AA0000000000000000000010 /* TodayView.swift in Sources */,
 				AA3000000000000000000005 /* DayStateEditor.swift in Sources */,
+				AA4000000000000000000004 /* CalendarModel.swift in Sources */,
+				AA4000000000000000000005 /* CalendarView.swift in Sources */,
+				AA4000000000000000000006 /* MonthGridView.swift in Sources */,
+				AA4000000000000000000007 /* DayDetailView.swift in Sources */,
 				AA1000000000000000000004 /* PhotoAssetView.swift in Sources */,
 				AA200000000000000000000B /* VoicePlaybackView.swift in Sources */,
+				AA4000000000000000000008 /* FeelingFlower.swift in Sources */,
 				AA0000000000000000000009 /* AppTheme.swift in Sources */,
+				AA4000000000000000000009 /* MainTabBar.swift in Sources */,
 				AA0000000000000000000008 /* AppDateFormatting.swift in Sources */,
 				AA200000000000000000000A /* VoiceFormatting.swift in Sources */,
 			);
@@ -568,6 +621,9 @@
 				AA200000000000000000000F /* AppModelVoiceTests.swift in Sources */,
 				AA3000000000000000000004 /* DayStatePersistenceTests.swift in Sources */,
 				AA3000000000000000000006 /* AppModelDayStateTests.swift in Sources */,
+				AA400000000000000000000A /* CalendarMonthTests.swift in Sources */,
+				AA400000000000000000000B /* CalendarPersistenceTests.swift in Sources */,
+				AA400000000000000000000C /* CalendarModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -9,6 +9,7 @@ final class AppModel: ObservableObject {
     enum Route: Equatable {
         case capture
         case today
+        case calendar
     }
 
     struct Alert: Identifiable {
@@ -863,6 +864,19 @@ final class AppModel: ObservableObject {
         Task { [weak self] in
             await self?.refreshToday()
         }
+    }
+
+    func showCalendar() {
+        guard activeDraftVoice == nil else {
+            alert = Alert(message: "请先结束当前录音，再查看日历。")
+            return
+        }
+        guard !isTranscribingDraftVoice else {
+            alert = Alert(message: "请等待转写完成，或先跳过转写。")
+            return
+        }
+        stopVoicePlayback()
+        route = .calendar
     }
 
     @discardableResult

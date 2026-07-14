@@ -136,6 +136,79 @@ actor SwiftDataDayWorkspace: DayWorkspace {
         }
     }
 
+    func daySummaries(
+        from startDay: DayKey,
+        through endDay: DayKey,
+        userID: UUID
+    ) async throws -> [CalendarDaySummary] {
+        guard startDay <= endDay else {
+            throw DayWorkspaceError.invalidDayRange
+        }
+
+        let requestedUserID = userID
+        let lowerDayKey = startDay.storageValue
+        let upperDayKey = endDay.storageValue
+        let entryDescriptor = FetchDescriptor<EntryRecord>(
+            predicate: #Predicate<EntryRecord> { record in
+                record.userID == requestedUserID
+                    && record.dayKeyRawValue >= lowerDayKey
+                    && record.dayKeyRawValue <= upperDayKey
+            }
+        )
+        let stateDescriptor = FetchDescriptor<DayRecord>(
+            predicate: #Predicate<DayRecord> { record in
+                record.userID == requestedUserID
+                    && record.dayKeyRawValue >= lowerDayKey
+                    && record.dayKeyRawValue <= upperDayKey
+            }
+        )
+
+        let entryRecords = try modelContext.fetch(entryDescriptor)
+        let stateRecords = try modelContext.fetch(stateDescriptor)
+        var entryCounts: [DayKey: Int] = [:]
+        var states: [DayKey: DayState] = [:]
+
+        for record in entryRecords {
+            guard let dayKey = DayKey(storageValue: record.dayKeyRawValue) else {
+                throw PersistenceMappingError.invalidDayKey(record.dayKeyRawValue)
+            }
+            entryCounts[dayKey, default: 0] += 1
+        }
+
+        for record in stateRecords {
+            guard let dayKey = DayKey(storageValue: record.dayKeyRawValue) else {
+                throw PersistenceMappingError.invalidDayKey(record.dayKeyRawValue)
+            }
+            states[dayKey] = try record.domainState(
+                expectedUserID: userID,
+                expectedDayKey: dayKey
+            )
+        }
+
+        let days = Set(entryCounts.keys).union(states.keys).sorted()
+        return days.compactMap { dayKey in
+            let entryCount = entryCounts[dayKey, default: 0]
+            let state = states[dayKey] ?? DayState(dayKey: dayKey)
+            guard entryCount > 0 || state.feeling != nil || state.isImportant else {
+                return nil
+            }
+            return CalendarDaySummary(
+                dayKey: dayKey,
+                entryCount: entryCount,
+                hasJournal: false,
+                feeling: state.feeling,
+                isImportant: state.isImportant
+            )
+        }
+    }
+
+    func dayDetail(for day: DayKey, userID: UUID) async throws -> DayDetail {
+        async let loadedEntries = entries(for: day, userID: userID)
+        async let loadedState = dayState(for: day, userID: userID)
+        let (entries, state) = try await (loadedEntries, loadedState)
+        return DayDetail(dayKey: day, entries: entries, state: state)
+    }
+
     func dayState(for day: DayKey, userID: UUID) async throws -> DayState {
         guard let record = try dayRecord(for: day, userID: userID) else {
             return DayState(dayKey: day)

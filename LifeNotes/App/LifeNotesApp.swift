@@ -6,6 +6,7 @@ import SwiftUI
 struct LifeNotesApp: App {
     private let modelContainer: ModelContainer
     @StateObject private var appModel: AppModel
+    @StateObject private var calendarModel: CalendarModel
 
     init() {
         do {
@@ -32,6 +33,12 @@ struct LifeNotesApp: App {
                     userID: userID
                 )
             )
+            _calendarModel = StateObject(
+                wrappedValue: CalendarModel(
+                    workspace: workspace,
+                    userID: userID
+                )
+            )
         } catch {
             fatalError("无法初始化本地数据：\(error.localizedDescription)")
         }
@@ -39,7 +46,10 @@ struct LifeNotesApp: App {
 
     var body: some Scene {
         WindowGroup {
-            AppRootView(appModel: appModel)
+            AppRootView(
+                appModel: appModel,
+                calendarModel: calendarModel
+            )
         }
         .modelContainer(modelContainer)
     }

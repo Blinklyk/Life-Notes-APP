@@ -3,6 +3,7 @@ import SwiftUI
 struct AppRootView: View {
     @Environment(\.scenePhase) private var scenePhase
     @ObservedObject var appModel: AppModel
+    @ObservedObject var calendarModel: CalendarModel
     @StateObject private var privacyGate = PrivacyGateModel()
 
     var body: some View {
@@ -53,6 +54,11 @@ struct AppRootView: View {
             CaptureView(appModel: appModel)
         case .today:
             TodayView(appModel: appModel)
+        case .calendar:
+            CalendarView(
+                appModel: appModel,
+                calendarModel: calendarModel
+            )
         }
     }
 }
