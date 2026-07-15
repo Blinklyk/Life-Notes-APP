@@ -122,6 +122,55 @@ final class CalendarPersistenceTests: XCTestCase {
         }
     }
 
+    func testSummariesIncludeJournalOnlyDaysAndIgnoreOtherUsers() async throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let dayWorkspace = SwiftDataDayWorkspace(modelContainer: container)
+        let journalWorkspace = SwiftDataJournalWorkspace(modelContainer: container)
+        let requestedDay = day(2026, 7, 14)
+        let otherUserDay = day(2026, 7, 15)
+
+        _ = try await journalWorkspace.append(
+            NewJournalVersion(
+                title: "只有日记",
+                blocks: [JournalBlock(text: "手写内容")],
+                origin: .edited,
+                sourceFingerprint: JournalSourceFingerprint(rawValue: "empty-source"),
+                sourceEntryCount: 0,
+                createdAt: instant(for: requestedDay)
+            ),
+            for: requestedDay,
+            userID: userID
+        )
+        _ = try await journalWorkspace.append(
+            NewJournalVersion(
+                title: "其他用户",
+                blocks: [JournalBlock(text: "不应出现")],
+                origin: .edited,
+                sourceFingerprint: JournalSourceFingerprint(rawValue: "other-user-source"),
+                sourceEntryCount: 0,
+                createdAt: instant(for: otherUserDay)
+            ),
+            for: otherUserDay,
+            userID: otherUserID
+        )
+
+        let summaries = try await dayWorkspace.daySummaries(
+            from: day(2026, 7, 1),
+            through: day(2026, 7, 31),
+            userID: userID
+        )
+
+        XCTAssertEqual(
+            summaries,
+            [
+                CalendarDaySummary(
+                    dayKey: requestedDay,
+                    hasJournal: true
+                )
+            ]
+        )
+    }
+
     func testSummariesRejectInvalidEntryDayKeyInsideNumericRange() async throws {
         let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
         let context = ModelContext(container)
@@ -187,6 +236,137 @@ final class CalendarPersistenceTests: XCTestCase {
         } catch {
             XCTFail("收到非预期错误：\(error)")
         }
+    }
+
+    func testSummariesDowngradeMissingCurrentVersionAndKeepOtherDays() async throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let journalWorkspace = SwiftDataJournalWorkspace(modelContainer: container)
+        let validDay = day(2026, 7, 14)
+        let corruptedDay = day(2026, 7, 16)
+        _ = try await journalWorkspace.append(
+            NewJournalVersion(
+                title: "正常日记",
+                blocks: [JournalBlock(text: "仍应显示")],
+                origin: .edited,
+                sourceFingerprint: JournalSourceFingerprint(rawValue: "valid-calendar"),
+                sourceEntryCount: 0
+            ),
+            for: validDay,
+            userID: userID
+        )
+        _ = try await journalWorkspace.append(
+            NewJournalVersion(
+                title: "将被损坏",
+                blocks: [JournalBlock(text: "内容")],
+                origin: .edited,
+                sourceFingerprint: JournalSourceFingerprint(rawValue: "calendar-corruption"),
+                sourceEntryCount: 0
+            ),
+            for: corruptedDay,
+            userID: userID
+        )
+        let dayWorkspace = SwiftDataDayWorkspace(modelContainer: container)
+        _ = try await createTextEntry(
+            "损坏日记当天的原始记录",
+            on: corruptedDay,
+            workspace: dayWorkspace
+        )
+
+        let context = ModelContext(container)
+        let record = try XCTUnwrap(
+            try context.fetch(FetchDescriptor<JournalRecord>()).first {
+                $0.dayKeyRawValue == corruptedDay.storageValue
+            }
+        )
+        record.currentVersionID = UUID()
+        try context.save()
+
+        let summaries = try await SwiftDataDayWorkspace(modelContainer: container).daySummaries(
+            from: day(2026, 7, 1),
+            through: day(2026, 7, 31),
+            userID: userID
+        )
+
+        XCTAssertEqual(
+            summaries,
+            [
+                CalendarDaySummary(dayKey: validDay, hasJournal: true),
+                CalendarDaySummary(dayKey: corruptedDay, entryCount: 1),
+            ]
+        )
+    }
+
+    func testSummariesDowngradeCorruptedHistoricalVersionAndKeepOtherDays() async throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let journalWorkspace = SwiftDataJournalWorkspace(modelContainer: container)
+        let corruptedDay = day(2026, 7, 17)
+        let validDay = day(2026, 7, 18)
+        let historicalVersionID = UUID()
+        _ = try await journalWorkspace.append(
+            NewJournalVersion(
+                id: historicalVersionID,
+                title: "损坏的历史版本",
+                blocks: [JournalBlock(text: "旧内容")],
+                origin: .generated,
+                sourceFingerprint: JournalSourceFingerprint(rawValue: "history-source"),
+                sourceEntryCount: 1
+            ),
+            for: corruptedDay,
+            userID: userID
+        )
+        _ = try await journalWorkspace.append(
+            NewJournalVersion(
+                title: "当前版本仍可解码",
+                blocks: [JournalBlock(text: "新内容")],
+                origin: .edited,
+                sourceFingerprint: JournalSourceFingerprint(rawValue: "history-source"),
+                sourceEntryCount: 1,
+                baseVersionID: historicalVersionID
+            ),
+            for: corruptedDay,
+            userID: userID
+        )
+        _ = try await journalWorkspace.append(
+            NewJournalVersion(
+                title: "另一天的正常日记",
+                blocks: [JournalBlock(text: "正常内容")],
+                origin: .edited,
+                sourceFingerprint: JournalSourceFingerprint(rawValue: "valid-source"),
+                sourceEntryCount: 0
+            ),
+            for: validDay,
+            userID: userID
+        )
+        let dayWorkspace = SwiftDataDayWorkspace(modelContainer: container)
+        _ = try await dayWorkspace.setImportant(
+            true,
+            for: corruptedDay,
+            userID: userID,
+            updatedAt: instant(for: corruptedDay)
+        )
+
+        let context = ModelContext(container)
+        let historicalVersion = try XCTUnwrap(
+            try context.fetch(FetchDescriptor<JournalVersionRecord>()).first {
+                $0.id == historicalVersionID
+            }
+        )
+        historicalVersion.blocksData = Data("{}".utf8)
+        try context.save()
+
+        let summaries = try await SwiftDataDayWorkspace(modelContainer: container).daySummaries(
+            from: day(2026, 7, 1),
+            through: day(2026, 7, 31),
+            userID: userID
+        )
+
+        XCTAssertEqual(
+            summaries,
+            [
+                CalendarDaySummary(dayKey: corruptedDay, isImportant: true),
+                CalendarDaySummary(dayKey: validDay, hasJournal: true),
+            ]
+        )
     }
 
     func testDayDetailReturnsCompleteAttachmentsAndState() async throws {

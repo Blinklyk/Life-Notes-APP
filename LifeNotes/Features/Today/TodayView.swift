@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TodayView: View {
     @ObservedObject var appModel: AppModel
+    @ObservedObject var journalModel: JournalModel
     @AccessibilityFocusState private var isTitleFocused: Bool
     @State private var presentedPhoto: FullScreenPhotoItem?
     @State private var editingVoice: VoiceAttachment?
@@ -27,6 +28,13 @@ struct TodayView: View {
                     }
                 )
                 .padding(.top, 20)
+
+                JournalSection(
+                    dayKey: todayDayKey,
+                    model: journalModel,
+                    photoLibrary: appModel.photoLibrary
+                )
+                .padding(.top, 28)
 
                 HStack(alignment: .firstTextBaseline) {
                     Text("随心记录")
@@ -97,6 +105,11 @@ struct TodayView: View {
             isTitleFocused = true
             await appModel.refreshToday()
         }
+        .onChange(of: appModel.entries) { _, _ in
+            Task {
+                await journalModel.load(day: todayDayKey, showError: false)
+            }
+        }
         .fullScreenCover(item: $presentedPhoto) { photo in
             FullScreenPhotoViewer(
                 item: photo,
@@ -109,6 +122,10 @@ struct TodayView: View {
                 voice: voice
             )
         }
+    }
+
+    private var todayDayKey: DayKey {
+        DayKey(containing: appModel.todayDate, in: appModel.todayTimeZone)
     }
 }
 

@@ -68,6 +68,23 @@
 		AA400000000000000000000A /* CalendarMonthTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB400000000000000000000A /* CalendarMonthTests.swift */; };
 		AA400000000000000000000B /* CalendarPersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB400000000000000000000B /* CalendarPersistenceTests.swift */; };
 		AA400000000000000000000C /* CalendarModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB400000000000000000000C /* CalendarModelTests.swift */; };
+		AA5000000000000000000001 /* Journal.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB5000000000000000000001 /* Journal.swift */; };
+		AA5000000000000000000002 /* JournalGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB5000000000000000000002 /* JournalGenerator.swift */; };
+		AA5000000000000000000003 /* LocalJournalGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB5000000000000000000003 /* LocalJournalGenerator.swift */; };
+		AA5000000000000000000004 /* JournalWorkspace.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB5000000000000000000004 /* JournalWorkspace.swift */; };
+		AA5000000000000000000005 /* JournalRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB5000000000000000000005 /* JournalRecord.swift */; };
+		AA5000000000000000000006 /* JournalVersionRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB5000000000000000000006 /* JournalVersionRecord.swift */; };
+		AA5000000000000000000007 /* JournalBlockCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB5000000000000000000007 /* JournalBlockCodec.swift */; };
+		AA5000000000000000000008 /* SwiftDataJournalWorkspace.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB5000000000000000000008 /* SwiftDataJournalWorkspace.swift */; };
+		AA5000000000000000000009 /* JournalModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB5000000000000000000009 /* JournalModel.swift */; };
+		AA500000000000000000000A /* JournalDocumentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB500000000000000000000A /* JournalDocumentView.swift */; };
+		AA500000000000000000000B /* JournalEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB500000000000000000000B /* JournalEditorView.swift */; };
+		AA500000000000000000000C /* JournalHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB500000000000000000000C /* JournalHistoryView.swift */; };
+		AA500000000000000000000D /* JournalSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB500000000000000000000D /* JournalSection.swift */; };
+		AA500000000000000000000E /* JournalDomainTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB500000000000000000000E /* JournalDomainTests.swift */; };
+		AA500000000000000000000F /* LocalJournalGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB500000000000000000000F /* LocalJournalGeneratorTests.swift */; };
+		AA5000000000000000000010 /* JournalPersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB5000000000000000000010 /* JournalPersistenceTests.swift */; };
+		AA5000000000000000000011 /* JournalModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB5000000000000000000011 /* JournalModelTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -144,6 +161,23 @@
 		BB400000000000000000000A /* CalendarMonthTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarMonthTests.swift; sourceTree = "<group>"; };
 		BB400000000000000000000B /* CalendarPersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarPersistenceTests.swift; sourceTree = "<group>"; };
 		BB400000000000000000000C /* CalendarModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarModelTests.swift; sourceTree = "<group>"; };
+		BB5000000000000000000001 /* Journal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Journal.swift; sourceTree = "<group>"; };
+		BB5000000000000000000002 /* JournalGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalGenerator.swift; sourceTree = "<group>"; };
+		BB5000000000000000000003 /* LocalJournalGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalJournalGenerator.swift; sourceTree = "<group>"; };
+		BB5000000000000000000004 /* JournalWorkspace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalWorkspace.swift; sourceTree = "<group>"; };
+		BB5000000000000000000005 /* JournalRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalRecord.swift; sourceTree = "<group>"; };
+		BB5000000000000000000006 /* JournalVersionRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalVersionRecord.swift; sourceTree = "<group>"; };
+		BB5000000000000000000007 /* JournalBlockCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalBlockCodec.swift; sourceTree = "<group>"; };
+		BB5000000000000000000008 /* SwiftDataJournalWorkspace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataJournalWorkspace.swift; sourceTree = "<group>"; };
+		BB5000000000000000000009 /* JournalModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalModel.swift; sourceTree = "<group>"; };
+		BB500000000000000000000A /* JournalDocumentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalDocumentView.swift; sourceTree = "<group>"; };
+		BB500000000000000000000B /* JournalEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalEditorView.swift; sourceTree = "<group>"; };
+		BB500000000000000000000C /* JournalHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalHistoryView.swift; sourceTree = "<group>"; };
+		BB500000000000000000000D /* JournalSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalSection.swift; sourceTree = "<group>"; };
+		BB500000000000000000000E /* JournalDomainTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalDomainTests.swift; sourceTree = "<group>"; };
+		BB500000000000000000000F /* LocalJournalGeneratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalJournalGeneratorTests.swift; sourceTree = "<group>"; };
+		BB5000000000000000000010 /* JournalPersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalPersistenceTests.swift; sourceTree = "<group>"; };
+		BB5000000000000000000011 /* JournalModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalModelTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -226,6 +260,7 @@
 				BB3000000000000000000001 /* DailyFeeling.swift */,
 				BB3000000000000000000002 /* DayState.swift */,
 				BB0000000000000000000002 /* Entry.swift */,
+				BB5000000000000000000001 /* Journal.swift */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -240,6 +275,8 @@
 				CC2000000000000000000002 /* AudioRecording */,
 				CC2000000000000000000003 /* AudioPlayback */,
 				CC2000000000000000000004 /* Transcription */,
+				CC5000000000000000000001 /* JournalGeneration */,
+				CC5000000000000000000002 /* JournalWorkspace */,
 			);
 			path = Modules;
 			sourceTree = "<group>";
@@ -261,6 +298,7 @@
 				CC1000000000000000000005 /* Drafts */,
 				CC2000000000000000000005 /* Audio */,
 				CC2000000000000000000006 /* Transcription */,
+				CC5000000000000000000003 /* JournalGeneration */,
 			);
 			path = Infrastructure;
 			sourceTree = "<group>";
@@ -272,8 +310,12 @@
 				BB1000000000000000000002 /* PhotoAttachmentRecord.swift */,
 				BB2000000000000000000001 /* VoiceAttachmentRecord.swift */,
 				BB3000000000000000000003 /* DayRecord.swift */,
+				BB5000000000000000000005 /* JournalRecord.swift */,
+				BB5000000000000000000006 /* JournalVersionRecord.swift */,
+				BB5000000000000000000007 /* JournalBlockCodec.swift */,
 				BB0000000000000000000005 /* ModelContainerFactory.swift */,
 				BB0000000000000000000006 /* SwiftDataDayWorkspace.swift */,
+				BB5000000000000000000008 /* SwiftDataJournalWorkspace.swift */,
 			);
 			path = Persistence;
 			sourceTree = "<group>";
@@ -292,6 +334,7 @@
 				CC000000000000000000000C /* Capture */,
 				CC000000000000000000000D /* Today */,
 				CC4000000000000000000001 /* Calendar */,
+				CC5000000000000000000004 /* Journal */,
 				CC1000000000000000000003 /* Shared */,
 			);
 			path = Features;
@@ -361,6 +404,10 @@
 				BB400000000000000000000A /* CalendarMonthTests.swift */,
 				BB400000000000000000000B /* CalendarPersistenceTests.swift */,
 				BB400000000000000000000C /* CalendarModelTests.swift */,
+				BB500000000000000000000E /* JournalDomainTests.swift */,
+				BB500000000000000000000F /* LocalJournalGeneratorTests.swift */,
+				BB5000000000000000000010 /* JournalPersistenceTests.swift */,
+				BB5000000000000000000011 /* JournalModelTests.swift */,
 			);
 			path = LifeNotesTests;
 			sourceTree = "<group>";
@@ -455,6 +502,42 @@
 				BB2000000000000000000007 /* SystemSpeechTranscriber.swift */,
 			);
 			path = Transcription;
+			sourceTree = "<group>";
+		};
+		CC5000000000000000000001 /* JournalGeneration */ = {
+			isa = PBXGroup;
+			children = (
+				BB5000000000000000000002 /* JournalGenerator.swift */,
+			);
+			path = JournalGeneration;
+			sourceTree = "<group>";
+		};
+		CC5000000000000000000002 /* JournalWorkspace */ = {
+			isa = PBXGroup;
+			children = (
+				BB5000000000000000000004 /* JournalWorkspace.swift */,
+			);
+			path = JournalWorkspace;
+			sourceTree = "<group>";
+		};
+		CC5000000000000000000003 /* JournalGeneration */ = {
+			isa = PBXGroup;
+			children = (
+				BB5000000000000000000003 /* LocalJournalGenerator.swift */,
+			);
+			path = JournalGeneration;
+			sourceTree = "<group>";
+		};
+		CC5000000000000000000004 /* Journal */ = {
+			isa = PBXGroup;
+			children = (
+				BB5000000000000000000009 /* JournalModel.swift */,
+				BB500000000000000000000A /* JournalDocumentView.swift */,
+				BB500000000000000000000B /* JournalEditorView.swift */,
+				BB500000000000000000000C /* JournalHistoryView.swift */,
+				BB500000000000000000000D /* JournalSection.swift */,
+			);
+			path = Journal;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -568,7 +651,10 @@
 				AA3000000000000000000001 /* DailyFeeling.swift in Sources */,
 				AA3000000000000000000002 /* DayState.swift in Sources */,
 				AA0000000000000000000002 /* Entry.swift in Sources */,
+				AA5000000000000000000001 /* Journal.swift in Sources */,
 				AA0000000000000000000003 /* DayWorkspace.swift in Sources */,
+				AA5000000000000000000002 /* JournalGenerator.swift in Sources */,
+				AA5000000000000000000004 /* JournalWorkspace.swift in Sources */,
 				AA1000000000000000000001 /* PhotoLibrary.swift in Sources */,
 				AA2000000000000000000002 /* AudioLibrary.swift in Sources */,
 				AA2000000000000000000004 /* VoiceRecorder.swift in Sources */,
@@ -579,8 +665,12 @@
 				AA1000000000000000000002 /* PhotoAttachmentRecord.swift in Sources */,
 				AA2000000000000000000001 /* VoiceAttachmentRecord.swift in Sources */,
 				AA3000000000000000000003 /* DayRecord.swift in Sources */,
+				AA5000000000000000000005 /* JournalRecord.swift in Sources */,
+				AA5000000000000000000006 /* JournalVersionRecord.swift in Sources */,
+				AA5000000000000000000007 /* JournalBlockCodec.swift in Sources */,
 				AA0000000000000000000005 /* ModelContainerFactory.swift in Sources */,
 				AA0000000000000000000006 /* SwiftDataDayWorkspace.swift in Sources */,
+				AA5000000000000000000008 /* SwiftDataJournalWorkspace.swift in Sources */,
 				AA0000000000000000000007 /* LocalUserIdentity.swift in Sources */,
 				AA1000000000000000000003 /* FilePhotoLibrary.swift in Sources */,
 				AA2000000000000000000003 /* FileAudioLibrary.swift in Sources */,
@@ -588,6 +678,7 @@
 				AA2000000000000000000009 /* SystemVoicePlayer.swift in Sources */,
 				AA2000000000000000000007 /* SystemSpeechTranscriber.swift in Sources */,
 				AA1000000000000000000007 /* FileCaptureDraftStore.swift in Sources */,
+				AA5000000000000000000003 /* LocalJournalGenerator.swift in Sources */,
 				AA000000000000000000000F /* CaptureView.swift in Sources */,
 				AA200000000000000000000C /* VoiceCaptureCard.swift in Sources */,
 				AA0000000000000000000010 /* TodayView.swift in Sources */,
@@ -596,6 +687,11 @@
 				AA4000000000000000000005 /* CalendarView.swift in Sources */,
 				AA4000000000000000000006 /* MonthGridView.swift in Sources */,
 				AA4000000000000000000007 /* DayDetailView.swift in Sources */,
+				AA5000000000000000000009 /* JournalModel.swift in Sources */,
+				AA500000000000000000000A /* JournalDocumentView.swift in Sources */,
+				AA500000000000000000000B /* JournalEditorView.swift in Sources */,
+				AA500000000000000000000C /* JournalHistoryView.swift in Sources */,
+				AA500000000000000000000D /* JournalSection.swift in Sources */,
 				AA1000000000000000000004 /* PhotoAssetView.swift in Sources */,
 				AA200000000000000000000B /* VoicePlaybackView.swift in Sources */,
 				AA4000000000000000000008 /* FeelingFlower.swift in Sources */,
@@ -624,6 +720,10 @@
 				AA400000000000000000000A /* CalendarMonthTests.swift in Sources */,
 				AA400000000000000000000B /* CalendarPersistenceTests.swift in Sources */,
 				AA400000000000000000000C /* CalendarModelTests.swift in Sources */,
+				AA500000000000000000000E /* JournalDomainTests.swift in Sources */,
+				AA500000000000000000000F /* LocalJournalGeneratorTests.swift in Sources */,
+				AA5000000000000000000010 /* JournalPersistenceTests.swift in Sources */,
+				AA5000000000000000000011 /* JournalModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

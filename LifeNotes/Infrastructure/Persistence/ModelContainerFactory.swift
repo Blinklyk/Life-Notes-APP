@@ -11,7 +11,9 @@ enum ModelContainerFactory {
             EntryRecord.self,
             PhotoAttachmentRecord.self,
             VoiceAttachmentRecord.self,
-            DayRecord.self
+            DayRecord.self,
+            JournalRecord.self,
+            JournalVersionRecord.self
         ])
         let configuration: ModelConfiguration
 

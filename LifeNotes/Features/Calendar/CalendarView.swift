@@ -3,6 +3,7 @@ import SwiftUI
 struct CalendarView: View {
     @ObservedObject var appModel: AppModel
     @ObservedObject var calendarModel: CalendarModel
+    @ObservedObject var journalModel: JournalModel
     @State private var path: [DayKey] = []
 
     var body: some View {
@@ -39,7 +40,8 @@ struct CalendarView: View {
                 DayDetailView(
                     dayKey: day,
                     appModel: appModel,
-                    calendarModel: calendarModel
+                    calendarModel: calendarModel,
+                    journalModel: journalModel
                 )
             }
         }

@@ -4,6 +4,7 @@ struct DayDetailView: View {
     let dayKey: DayKey
     @ObservedObject var appModel: AppModel
     @ObservedObject var calendarModel: CalendarModel
+    @ObservedObject var journalModel: JournalModel
     @State private var presentedPhoto: FullScreenPhotoItem?
 
     var body: some View {
@@ -30,6 +31,14 @@ struct DayDetailView: View {
         .task(id: dayKey) {
             await calendarModel.loadDetail(for: dayKey, showError: true)
         }
+        .onChange(of: calendarModel.detail?.entries) { _, detailEntries in
+            guard calendarModel.detail?.dayKey == dayKey, detailEntries != nil else {
+                return
+            }
+            Task {
+                await journalModel.load(day: dayKey, showError: false)
+            }
+        }
         .onDisappear {
             appModel.stopVoicePlayback()
         }
@@ -55,6 +64,18 @@ struct DayDetailView: View {
                 }
             )
             .padding(.top, 20)
+
+            JournalSection(
+                dayKey: dayKey,
+                model: journalModel,
+                photoLibrary: appModel.photoLibrary,
+                onJournalChanged: {
+                    Task {
+                        await calendarModel.loadMonth(showError: false)
+                    }
+                }
+            )
+            .padding(.top, 28)
 
             HStack(alignment: .firstTextBaseline) {
                 Text("随心记录")

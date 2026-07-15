@@ -262,3 +262,34 @@
 - 最新构建已安装到 Simulator，但系统身份验证停在“输入 iPhone 密码”；`Matching Face` 不能越过该密码页，尚未完成人工点击月历、Dynamic Type 和 VoiceOver 检查。
 - 人工验收前需在 Simulator 的 `Features > Face ID > Enrolled` 启用模拟 Face ID 后重新认证，或输入该模拟器密码；真机仍需检查实际 Face ID 与创建时区显示。
 - 下一阶段实现随心日记生成接口、编辑和历史版本，并让月历的日记文档标记接入真实数据。
+
+## 2026-07-15：随心日记生成、编辑与历史版本闭环
+
+### 用户要求
+
+- 继续实现初代全部功能，本阶段完成 AI 生成随心日记及编辑、历史版本。
+- 每完成一项更新 `README.md` 和项目 memory，并创建一次中文 Conventional Commit。
+
+### 本次实际修改
+
+- 新增独立 `JournalDay`、`JournalVersion`、`JournalBlock`、表达风格和每日素材 fingerprint；随心记录与随心日记保持独立。
+- 以窄 `JournalGenerator` 接口接入本地事实型生成器，只使用文字、逐图批注、语音转写、素材数量及照片快照，不虚构素材外事实。
+- 新增 SwiftData 日记主记录和不可变版本记录；生成、重新生成、手写、编辑与恢复历史均追加版本，并保存来源 fingerprint、素材数和 base version。
+- Today 与历史日期详情支持生成、重新生成、手写、完整图文编辑、历史预览和恢复；月历接入真实日记标记。
+- 编辑器支持标题、正文、照片、caption、增删和上下排序，未保存退出需要确认，保存或恢复期间整页锁定。
+- App inactive/background 时保活原内容树并使用隐私门覆盖，重新解锁后保留当前 route 与 sheet，不再丢失未保存日记稿。
+- JournalModel 区分同日素材刷新与跨日 operation；已落库 append 即使遇到迟到 load 也会重新读取并收敛，不会误报失败或重复版本。
+- 日记读写、月历日记查询和照片保留查询使用共享串行协调器；损坏日记按日降级，历史版本引用的照片继续保留。
+
+### 验证
+
+- 全量 Swift parse、`plutil -lint LifeNotes.xcodeproj/project.pbxproj` 与 `git diff --check` 通过。
+- Xcode 26.6、Apple Swift 6.3.3 下使用 Swift 6 完整严格并发与 warnings-as-errors 完成构建和全量测试。
+- iPhone 17 Pro Max / iOS 26.5 Simulator 执行 157 项测试，157 项通过；结果包为 `/tmp/LifeNotesJournalFullFinal-20260715-1356.xcresult`。
+- 日记持久化与月历降级定向测试 22/22 通过，结果包为 `/tmp/LifeNotesJournalConsistencyTests2.xcresult`。
+
+### 风险与待办
+
+- 当前生成器为可离线工作的本地事实型实现，真实 OpenAI 生成将在 Windows 后端阶段接入，API key 只保存在后端。
+- 仍需在 Simulator 或真机人工检查 Face ID 返回后 sheet 保活、Dynamic Type、VoiceOver 和键盘交互。
+- 下一阶段实现随心记录编辑、删除与全文搜索。

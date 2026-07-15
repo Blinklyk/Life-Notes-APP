@@ -4,14 +4,18 @@ import SwiftUI
 @main
 @MainActor
 struct LifeNotesApp: App {
+    private static let writingStyleDefaultsKey = "journal.writing-style"
+
     private let modelContainer: ModelContainer
     @StateObject private var appModel: AppModel
     @StateObject private var calendarModel: CalendarModel
+    @StateObject private var journalModel: JournalModel
 
     init() {
         do {
             let container = try ModelContainerFactory.make()
             let workspace = SwiftDataDayWorkspace(modelContainer: container)
+            let journalWorkspace = SwiftDataJournalWorkspace(modelContainer: container)
             let photoLibrary = try FilePhotoLibrary.makeDefault()
             let audioLibrary = try FileAudioLibrary.makeDefault()
             let captureDraftStore = try FileCaptureDraftStore.makeDefault()
@@ -19,6 +23,9 @@ struct LifeNotesApp: App {
             let speechTranscriber = SystemSpeechTranscriber()
             let voicePlayer = SystemVoicePlayer()
             let userID = LocalUserIdentity.loadOrCreate()
+            let writingStyle = UserDefaults.standard
+                .string(forKey: Self.writingStyleDefaultsKey)
+                .flatMap(WritingStyle.init(rawValue:)) ?? .natural
 
             modelContainer = container
             _appModel = StateObject(
@@ -39,6 +46,21 @@ struct LifeNotesApp: App {
                     userID: userID
                 )
             )
+            _journalModel = StateObject(
+                wrappedValue: JournalModel(
+                    dayWorkspace: workspace,
+                    journalWorkspace: journalWorkspace,
+                    generator: LocalJournalGenerator(),
+                    userID: userID,
+                    writingStyle: writingStyle,
+                    onWritingStyleChange: { style in
+                        UserDefaults.standard.set(
+                            style.rawValue,
+                            forKey: Self.writingStyleDefaultsKey
+                        )
+                    }
+                )
+            )
         } catch {
             fatalError("无法初始化本地数据：\(error.localizedDescription)")
         }
@@ -48,7 +70,8 @@ struct LifeNotesApp: App {
         WindowGroup {
             AppRootView(
                 appModel: appModel,
-                calendarModel: calendarModel
+                calendarModel: calendarModel,
+                journalModel: journalModel
             )
         }
         .modelContainer(modelContainer)

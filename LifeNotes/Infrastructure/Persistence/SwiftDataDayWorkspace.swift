@@ -162,7 +162,6 @@ actor SwiftDataDayWorkspace: DayWorkspace {
                     && record.dayKeyRawValue <= upperDayKey
             }
         )
-
         let entryRecords = try modelContext.fetch(entryDescriptor)
         let stateRecords = try modelContext.fetch(stateDescriptor)
         var entryCounts: [DayKey: Int] = [:]
@@ -185,17 +184,29 @@ actor SwiftDataDayWorkspace: DayWorkspace {
             )
         }
 
-        let days = Set(entryCounts.keys).union(states.keys).sorted()
+        let journalDays = try JournalPersistenceCoordinator.withLock {
+            try validJournalDays(
+                from: startDay,
+                through: endDay,
+                userID: userID
+            )
+        }
+
+        let days = Set(entryCounts.keys)
+            .union(states.keys)
+            .union(journalDays)
+            .sorted()
         return days.compactMap { dayKey in
             let entryCount = entryCounts[dayKey, default: 0]
             let state = states[dayKey] ?? DayState(dayKey: dayKey)
-            guard entryCount > 0 || state.feeling != nil || state.isImportant else {
+            let hasJournal = journalDays.contains(dayKey)
+            guard entryCount > 0 || hasJournal || state.feeling != nil || state.isImportant else {
                 return nil
             }
             return CalendarDaySummary(
                 dayKey: dayKey,
                 entryCount: entryCount,
-                hasJournal: false,
+                hasJournal: hasJournal,
                 feeling: state.feeling,
                 isImportant: state.isImportant
             )
@@ -266,12 +277,20 @@ actor SwiftDataDayWorkspace: DayWorkspace {
                 record.userID == requestedUserID
             }
         )
-        return Set(try modelContext.fetch(descriptor).map(\.id))
+        let entryPhotoIDs = Set(try modelContext.fetch(descriptor).map(\.id))
+        let retainedJournalPhotoIDs = try JournalPersistenceCoordinator.withLock {
+            try journalPhotoIDs(userID: userID)
+        }
+        return entryPhotoIDs.union(retainedJournalPhotoIDs)
     }
 
     func allPhotoIDs() async throws -> Set<UUID> {
         let descriptor = FetchDescriptor<PhotoAttachmentRecord>()
-        return Set(try modelContext.fetch(descriptor).map(\.id))
+        let entryPhotoIDs = Set(try modelContext.fetch(descriptor).map(\.id))
+        let retainedJournalPhotoIDs = try JournalPersistenceCoordinator.withLock {
+            try allJournalPhotoIDs()
+        }
+        return entryPhotoIDs.union(retainedJournalPhotoIDs)
     }
 
     func retainedVoiceIDs(userID: UUID) async throws -> Set<UUID> {
@@ -479,6 +498,93 @@ actor SwiftDataDayWorkspace: DayWorkspace {
             result.insert(record.id)
             if let pathID = VoiceAudioStoragePath.audioID(from: relativePath) {
                 result.insert(pathID)
+            }
+        }
+    }
+
+    private func validJournalDays(
+        from startDay: DayKey,
+        through endDay: DayKey,
+        userID: UUID
+    ) throws -> Set<DayKey> {
+        let requestedUserID = userID
+        let lowerDayKey = startDay.storageValue
+        let upperDayKey = endDay.storageValue
+        let journalDescriptor = FetchDescriptor<JournalRecord>(
+            predicate: #Predicate<JournalRecord> { record in
+                record.userID == requestedUserID
+                    && record.dayKeyRawValue >= lowerDayKey
+                    && record.dayKeyRawValue <= upperDayKey
+            }
+        )
+        let versionDescriptor = FetchDescriptor<JournalVersionRecord>(
+            predicate: #Predicate<JournalVersionRecord> { record in
+                record.userID == requestedUserID
+                    && record.dayKeyRawValue >= lowerDayKey
+                    && record.dayKeyRawValue <= upperDayKey
+            }
+        )
+        let journalRecords = try modelContext.fetch(journalDescriptor)
+        let versionRecords = try modelContext.fetch(versionDescriptor)
+        let versionsByJournalID = Dictionary(
+            grouping: versionRecords,
+            by: \JournalVersionRecord.journalID
+        )
+        let versionsByScopeKey = Dictionary(
+            grouping: versionRecords,
+            by: \JournalVersionRecord.scopeKey
+        )
+
+        return try journalRecords.reduce(into: Set<DayKey>()) { days, record in
+            guard let dayKey = DayKey(storageValue: record.dayKeyRawValue) else {
+                return
+            }
+            var relatedVersionsByID: [UUID: JournalVersionRecord] = [:]
+            for version in versionsByJournalID[record.id, default: []] {
+                relatedVersionsByID[version.id] = version
+            }
+            for version in versionsByScopeKey[record.scopeKey, default: []] {
+                relatedVersionsByID[version.id] = version
+            }
+
+            do {
+                _ = try JournalPersistenceSnapshot.makeJournal(
+                    record: record,
+                    versionRecords: Array(relatedVersionsByID.values),
+                    day: dayKey,
+                    userID: userID
+                )
+                days.insert(dayKey)
+            } catch is JournalPersistenceError {
+                // 日记损坏只隐藏当天标记，其他日期摘要仍可回看。
+            }
+        }
+    }
+
+    private func journalPhotoIDs(userID: UUID) throws -> Set<UUID> {
+        let requestedUserID = userID
+        let descriptor = FetchDescriptor<JournalVersionRecord>(
+            predicate: #Predicate<JournalVersionRecord> { record in
+                record.userID == requestedUserID
+            }
+        )
+        return try journalPhotoIDs(in: modelContext.fetch(descriptor))
+    }
+
+    private func allJournalPhotoIDs() throws -> Set<UUID> {
+        try journalPhotoIDs(
+            in: modelContext.fetch(FetchDescriptor<JournalVersionRecord>())
+        )
+    }
+
+    private func journalPhotoIDs(
+        in records: [JournalVersionRecord]
+    ) throws -> Set<UUID> {
+        try records.reduce(into: Set<UUID>()) { result, record in
+            for photoID in try JournalBlockCodec.decode(record.blocksData)
+                .compactMap(\.photo)
+                .map(\.id) {
+                result.insert(photoID)
             }
         }
     }
