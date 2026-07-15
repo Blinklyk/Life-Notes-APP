@@ -772,6 +772,26 @@ final class AppModel: ObservableObject {
         voicePlaybackProgress = 0
     }
 
+    func prepareForEntryMutation(_ entry: Entry) async -> Entry {
+        stopVoicePlayback()
+
+        let voiceIDs = Set(entry.voices.map(\.id))
+        if !voiceIDs.isDisjoint(with: transcribingSavedVoiceIDs) {
+            savedVoiceTranscriptionGeneration += 1
+            savedVoiceTranscriptionTask?.cancel()
+            speechTranscriber.cancel()
+            transcribingSavedVoiceIDs.subtract(voiceIDs)
+        }
+
+        guard let currentEntries = try? await workspace.entries(
+            for: entry.dayKey,
+            userID: userID
+        ) else {
+            return entry
+        }
+        return currentEntries.first { $0.id == entry.id } ?? entry
+    }
+
     func handleSceneDeactivation(isEnteringBackground: Bool) {
         stopVoicePlayback()
 

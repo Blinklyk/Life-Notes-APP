@@ -8,6 +8,7 @@ struct JournalEditorView: View {
     let onSaved: () -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var privacyGate: PrivacyGateModel
     private let initialTitle: String
     private let initialBlocks: [JournalBlock]
     @State private var title: String
@@ -106,6 +107,12 @@ struct JournalEditorView: View {
                     .disabled(isEditingDisabled)
             }
         }
+        .onChange(of: privacyGate.isContentCovered) { _, isCovered in
+            if isCovered {
+                showsDiscardConfirmation = false
+            }
+        }
+        .privacyProtectedPresentation()
     }
 
     @ViewBuilder

@@ -22,6 +22,8 @@ enum JournalPersistenceError: LocalizedError, Equatable {
     case invalidBlocksData
     case missingBaseVersion(UUID)
     case conflictingVersionID(UUID)
+    case unavailablePhotoReference(UUID)
+    case sourceMaterialChanged
 
     var errorDescription: String? {
         switch self {
@@ -47,6 +49,10 @@ enum JournalPersistenceError: LocalizedError, Equatable {
             return "本地日记找不到引用的基础版本：\(versionID)。"
         case let .conflictingVersionID(versionID):
             return "本地日记版本标识与已有内容冲突：\(versionID)。"
+        case let .unavailablePhotoReference(photoID):
+            return "日记引用的照片已不属于当前记录或历史版本：\(photoID)。"
+        case .sourceMaterialChanged:
+            return "生成日记所使用的每日素材已经变化，请重新生成。"
         }
     }
 }

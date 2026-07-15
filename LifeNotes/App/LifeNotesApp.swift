@@ -10,6 +10,7 @@ struct LifeNotesApp: App {
     @StateObject private var appModel: AppModel
     @StateObject private var calendarModel: CalendarModel
     @StateObject private var journalModel: JournalModel
+    @StateObject private var entryLibraryModel: EntryLibraryModel
 
     init() {
         do {
@@ -61,6 +62,14 @@ struct LifeNotesApp: App {
                     }
                 )
             )
+            _entryLibraryModel = StateObject(
+                wrappedValue: EntryLibraryModel(
+                    workspace: workspace,
+                    userID: userID,
+                    photoLibrary: photoLibrary,
+                    audioLibrary: audioLibrary
+                )
+            )
         } catch {
             fatalError("无法初始化本地数据：\(error.localizedDescription)")
         }
@@ -71,7 +80,8 @@ struct LifeNotesApp: App {
             AppRootView(
                 appModel: appModel,
                 calendarModel: calendarModel,
-                journalModel: journalModel
+                journalModel: journalModel,
+                entryLibraryModel: entryLibraryModel
             )
         }
         .modelContainer(modelContainer)

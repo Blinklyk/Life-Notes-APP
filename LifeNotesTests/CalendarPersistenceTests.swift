@@ -307,7 +307,7 @@ final class CalendarPersistenceTests: XCTestCase {
                 id: historicalVersionID,
                 title: "损坏的历史版本",
                 blocks: [JournalBlock(text: "旧内容")],
-                origin: .generated,
+                origin: .edited,
                 sourceFingerprint: JournalSourceFingerprint(rawValue: "history-source"),
                 sourceEntryCount: 1
             ),

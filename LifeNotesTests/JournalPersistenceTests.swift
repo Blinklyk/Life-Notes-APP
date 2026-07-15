@@ -11,7 +11,13 @@ final class JournalPersistenceTests: XCTestCase {
     func testFirstAppendCreatesVersionOneAndRoundTripsPhotoSnapshotMetadata() async throws {
         let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
         let workspace = SwiftDataJournalWorkspace(modelContainer: container)
-        let photo = makePhoto()
+        let sourceEntry = try await createEntryWithPhotos(
+            ids: [uuid(121)],
+            userID: userID,
+            container: container
+        )
+        let photo = try XCTUnwrap(sourceEntry.photos.first)
+        let sourceFingerprint = try JournalSourceFingerprint.make(entries: [sourceEntry])
         let createdAt = Date(timeIntervalSince1970: 1_768_435_200)
         let draft = NewJournalVersion(
             title: "河边的一天",
@@ -20,8 +26,8 @@ final class JournalPersistenceTests: XCTestCase {
                 JournalBlock(id: uuid(2), photo: photo, caption: "日记里的新说明"),
             ],
             origin: .generated,
-            sourceFingerprint: fingerprint("a"),
-            sourceEntryCount: 2,
+            sourceFingerprint: sourceFingerprint,
+            sourceEntryCount: 1,
             generatorIdentifier: "local.rule-based.v1",
             createdAt: createdAt
         )
@@ -36,8 +42,8 @@ final class JournalPersistenceTests: XCTestCase {
         XCTAssertEqual(reloaded.currentVersion.blocks, draft.blocks)
         XCTAssertEqual(reloaded.currentVersion.blocks.last?.photo, photo)
         XCTAssertEqual(reloaded.currentVersion.blocks.last?.caption, "日记里的新说明")
-        XCTAssertEqual(reloaded.currentVersion.sourceFingerprint, fingerprint("a"))
-        XCTAssertEqual(reloaded.currentVersion.sourceEntryCount, 2)
+        XCTAssertEqual(reloaded.currentVersion.sourceFingerprint, sourceFingerprint)
+        XCTAssertEqual(reloaded.currentVersion.sourceEntryCount, 1)
         XCTAssertEqual(reloaded.currentVersion.generatorIdentifier, "local.rule-based.v1")
         XCTAssertEqual(reloaded.currentVersion.createdAt, createdAt)
         XCTAssertTrue(reloaded.historyVersions.isEmpty)
@@ -49,12 +55,18 @@ final class JournalPersistenceTests: XCTestCase {
         let firstID = uuid(10)
         let secondID = uuid(11)
         let thirdID = uuid(12)
+        let sourceEntry = try await createEntryWithPhotos(
+            ids: [],
+            userID: userID,
+            container: container
+        )
+        let sourceFingerprint = try JournalSourceFingerprint.make(entries: [sourceEntry])
         let first = makeDraft(
             id: firstID,
             title: "第一版",
             text: "生成内容",
             origin: .generated,
-            fingerprint: fingerprint("b"),
+            fingerprint: sourceFingerprint,
             createdAt: Date(timeIntervalSince1970: 100)
         )
         let second = makeDraft(
@@ -62,7 +74,7 @@ final class JournalPersistenceTests: XCTestCase {
             title: "第二版",
             text: "编辑内容",
             origin: .edited,
-            fingerprint: fingerprint("b"),
+            fingerprint: sourceFingerprint,
             baseVersionID: firstID,
             createdAt: Date(timeIntervalSince1970: 200)
         )
@@ -71,7 +83,7 @@ final class JournalPersistenceTests: XCTestCase {
             title: "恢复第一版",
             text: "生成内容",
             origin: .restored,
-            fingerprint: fingerprint("b"),
+            fingerprint: sourceFingerprint,
             baseVersionID: firstID,
             createdAt: Date(timeIntervalSince1970: 300)
         )
@@ -204,9 +216,19 @@ final class JournalPersistenceTests: XCTestCase {
         let journalWorkspace = SwiftDataJournalWorkspace(modelContainer: container)
         let dayWorkspace = SwiftDataDayWorkspace(modelContainer: container)
         let firstVersionID = uuid(52)
-        let historicalPhoto = makePhoto(id: uuid(53))
-        let currentPhoto = makePhoto(id: uuid(54))
-        let otherPhoto = makePhoto(id: uuid(55))
+        let sourceEntry = try await createEntryWithPhotos(
+            ids: [uuid(53), uuid(54)],
+            userID: userID,
+            container: container
+        )
+        let otherSourceEntry = try await createEntryWithPhotos(
+            ids: [uuid(55)],
+            userID: otherUserID,
+            container: container
+        )
+        let historicalPhoto = try XCTUnwrap(sourceEntry.photos.first)
+        let currentPhoto = try XCTUnwrap(sourceEntry.photos.last)
+        let otherPhoto = try XCTUnwrap(otherSourceEntry.photos.first)
 
         _ = try await journalWorkspace.append(
             NewJournalVersion(
@@ -245,6 +267,18 @@ final class JournalPersistenceTests: XCTestCase {
             ),
             for: day,
             userID: otherUserID
+        )
+        _ = try await dayWorkspace.deleteEntry(
+            id: sourceEntry.id,
+            userID: userID,
+            expectedRevision: sourceEntry.revision,
+            deletedAt: Date(timeIntervalSince1970: 300)
+        )
+        _ = try await dayWorkspace.deleteEntry(
+            id: otherSourceEntry.id,
+            userID: otherUserID,
+            expectedRevision: otherSourceEntry.revision,
+            deletedAt: Date(timeIntervalSince1970: 300)
         )
 
         let retainedPhotoIDs = try await dayWorkspace.photoIDs(userID: userID)
@@ -587,7 +621,7 @@ final class JournalPersistenceTests: XCTestCase {
         id: UUID,
         title: String,
         text: String,
-        origin: JournalVersionOrigin = .generated,
+        origin: JournalVersionOrigin = .edited,
         fingerprint: JournalSourceFingerprint? = nil,
         baseVersionID: UUID? = nil,
         createdAt: Date = Date(timeIntervalSince1970: 1_768_435_200)
@@ -605,18 +639,40 @@ final class JournalPersistenceTests: XCTestCase {
         )
     }
 
-    private func makePhoto(id: UUID = UUID(uuid: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 121))) -> PhotoAttachment {
-        PhotoAttachment(
-            id: id,
-            entryID: uuid(122),
-            sortIndex: 3,
-            annotationText: "原始记录批注",
-            contentTypeIdentifier: "public.heic",
-            pixelWidth: 4_032,
-            pixelHeight: 3_024,
-            byteCount: 8_192,
-            originalRelativePath: "Photos/original.heic",
-            thumbnailRelativePath: "Photos/thumbnail.jpg"
+    private func createEntryWithPhotos(
+        ids: [UUID],
+        userID: UUID,
+        container: ModelContainer
+    ) async throws -> Entry {
+        var calendar = Calendar(identifier: .gregorian)
+        let utc = try XCTUnwrap(TimeZone(identifier: "UTC"))
+        calendar.timeZone = utc
+        let instant = try XCTUnwrap(
+            calendar.date(
+                from: DateComponents(
+                    year: day.year,
+                    month: day.month,
+                    day: day.day,
+                    hour: 12
+                )
+            )
+        )
+        let photos = ids.enumerated().map { index, id in
+            NewPhotoAttachment(
+                id: id,
+                annotationText: "原始记录批注 \(index + 1)",
+                contentTypeIdentifier: "public.heic",
+                pixelWidth: 4_032,
+                pixelHeight: 3_024,
+                byteCount: 8_192,
+                originalRelativePath: "Photos/\(id.uuidString)/original.heic",
+                thumbnailRelativePath: "Photos/\(id.uuidString)/thumbnail.jpg"
+            )
+        }
+        return try await SwiftDataDayWorkspace(modelContainer: container).create(
+            NewEntry(text: "日记照片来源", photos: photos),
+            userID: userID,
+            context: RecordingContext(instant: instant, timeZone: utc)
         )
     }
 

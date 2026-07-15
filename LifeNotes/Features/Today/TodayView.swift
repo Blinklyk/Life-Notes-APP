@@ -1,19 +1,77 @@
 import SwiftUI
 
 struct TodayView: View {
+    @EnvironmentObject private var privacyGate: PrivacyGateModel
     @ObservedObject var appModel: AppModel
     @ObservedObject var journalModel: JournalModel
+    @ObservedObject var entryLibraryModel: EntryLibraryModel
     @AccessibilityFocusState private var isTitleFocused: Bool
     @State private var presentedPhoto: FullScreenPhotoItem?
     @State private var editingVoice: VoiceAttachment?
+    @State private var showsSearch = false
+    @State private var entryPendingDeletion: Entry?
 
     var body: some View {
+        NavigationStack {
+            todayContent
+                .toolbar(.hidden, for: .navigationBar)
+                .navigationDestination(isPresented: $showsSearch) {
+                    EntrySearchView(
+                        appModel: appModel,
+                        entryLibraryModel: entryLibraryModel,
+                        onEditEntry: beginEditing,
+                        onDeleteEntry: requestDeletion
+                    )
+                }
+        }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if let notice = entryLibraryModel.notice {
+                EntryLibraryNoticeBanner(
+                    message: notice.message,
+                    onDismiss: { entryLibraryModel.notice = nil }
+                )
+            }
+        }
+        .sheet(item: editingEntryBinding) { entry in
+            EntryEditorView(
+                entry: entry,
+                model: entryLibraryModel,
+                appModel: appModel
+            )
+        }
+        .confirmationDialog(
+            "永久删除这条随心记录？",
+            isPresented: deletionConfirmationBinding,
+            titleVisibility: .visible,
+            presenting: entryPendingDeletion
+        ) { entry in
+            Button("永久删除记录", role: .destructive) {
+                delete(entry)
+            }
+            Button("取消", role: .cancel) {}
+        } message: { _ in
+            Text("原始文字、图片和录音将被删除且无法恢复；已有随心日记及其历史版本会保留。")
+        }
+        .animation(.easeInOut(duration: 0.2), value: entryLibraryModel.notice)
+        .onChange(of: privacyGate.isContentCovered) { _, isCovered in
+            if isCovered {
+                entryPendingDeletion = nil
+                entryLibraryModel.cancelEditingPreparation()
+            }
+        }
+        .onDisappear {
+            entryLibraryModel.cancelEditingPreparation()
+        }
+    }
+
+    private var todayContent: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 TodayHeader(
                     date: appModel.todayDate,
                     timeZone: appModel.todayTimeZone,
                     onNewEntry: { appModel.showCapture() },
+                    onSearch: { showsSearch = true },
                     isTitleFocused: $isTitleFocused
                 )
 
@@ -61,6 +119,7 @@ struct TodayView: View {
                         timeZone: appModel.todayTimeZone,
                         appModel: appModel,
                         photoLibrary: appModel.photoLibrary,
+                        busyEntryIDs: entryLibraryModel.busyEntryIDs,
                         onOpenPhoto: { photo, position in
                             presentedPhoto = FullScreenPhotoItem(
                                 id: photo.id,
@@ -68,7 +127,9 @@ struct TodayView: View {
                                 accessibilityLabel: "照片 \(position) 原图"
                             )
                         },
-                        onEditVoice: { editingVoice = $0 }
+                        onEditVoice: { editingVoice = $0 },
+                        onEditEntry: beginEditing,
+                        onDeleteEntry: requestDeletion
                     )
                     .padding(.top, 18)
                 }
@@ -127,12 +188,57 @@ struct TodayView: View {
     private var todayDayKey: DayKey {
         DayKey(containing: appModel.todayDate, in: appModel.todayTimeZone)
     }
+
+    private var editingEntryBinding: Binding<Entry?> {
+        Binding(
+            get: { entryLibraryModel.editingEntry },
+            set: { entry in
+                if entry == nil {
+                    entryLibraryModel.cancelEditing()
+                }
+            }
+        )
+    }
+
+    private var deletionConfirmationBinding: Binding<Bool> {
+        Binding(
+            get: { entryPendingDeletion != nil },
+            set: { isPresented in
+                if !isPresented {
+                    entryPendingDeletion = nil
+                }
+            }
+        )
+    }
+
+    private func beginEditing(_ entry: Entry) {
+        appModel.stopVoicePlayback()
+        Task {
+            await entryLibraryModel.prepareEditing(entry) { entry in
+                await appModel.prepareForEntryMutation(entry)
+            }
+        }
+    }
+
+    private func requestDeletion(_ entry: Entry) {
+        appModel.stopVoicePlayback()
+        entryLibraryModel.cancelEditingPreparation()
+        entryPendingDeletion = entry
+    }
+
+    private func delete(_ entry: Entry) {
+        Task {
+            let currentEntry = await appModel.prepareForEntryMutation(entry)
+            _ = await entryLibraryModel.deleteEntry(entry, preparedEntry: currentEntry)
+        }
+    }
 }
 
 private struct TodayHeader: View {
     let date: Date
     let timeZone: TimeZone
     let onNewEntry: () -> Void
+    let onSearch: () -> Void
     let isTitleFocused: AccessibilityFocusState<Bool>.Binding
 
     var body: some View {
@@ -140,12 +246,12 @@ private struct TodayHeader: View {
             HStack(alignment: .top, spacing: 16) {
                 titleBlock
                 Spacer(minLength: 12)
-                newEntryButton
+                actionButtons
             }
 
             VStack(alignment: .leading, spacing: 10) {
                 titleBlock
-                newEntryButton
+                actionButtons
             }
         }
     }
@@ -164,17 +270,30 @@ private struct TodayHeader: View {
         }
     }
 
-    private var newEntryButton: some View {
-        Button(action: onNewEntry) {
-            Image(systemName: "square.and.pencil")
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(AppTheme.accent)
-                .frame(width: 44, height: 44)
-                .background(AppTheme.accentSoft, in: RoundedRectangle(cornerRadius: 8))
+    private var actionButtons: some View {
+        HStack(spacing: 8) {
+            Button(action: onSearch) {
+                Image(systemName: "magnifyingglass")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(AppTheme.accent)
+                    .frame(width: 44, height: 44)
+                    .background(AppTheme.accentSoft, in: RoundedRectangle(cornerRadius: 8))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("搜索随心记录")
+            .help("搜索")
+
+            Button(action: onNewEntry) {
+                Image(systemName: "square.and.pencil")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(AppTheme.accent)
+                    .frame(width: 44, height: 44)
+                    .background(AppTheme.accentSoft, in: RoundedRectangle(cornerRadius: 8))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("立即记录")
+            .help("立即记录")
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("立即记录")
-        .help("立即记录")
     }
 }
 
@@ -183,8 +302,11 @@ struct EntryTimeline: View {
     let timeZone: TimeZone
     @ObservedObject var appModel: AppModel
     let photoLibrary: any PhotoLibrary
+    let busyEntryIDs: Set<UUID>
     let onOpenPhoto: (PhotoAttachment, Int) -> Void
     let onEditVoice: (VoiceAttachment) -> Void
+    let onEditEntry: (Entry) -> Void
+    let onDeleteEntry: (Entry) -> Void
     var allowsVoiceEditing = true
 
     var body: some View {
@@ -196,8 +318,11 @@ struct EntryTimeline: View {
                     isLast: index == entries.count - 1,
                     appModel: appModel,
                     photoLibrary: photoLibrary,
+                    isBusy: busyEntryIDs.contains(entry.id),
                     onOpenPhoto: onOpenPhoto,
                     onEditVoice: onEditVoice,
+                    onEditEntry: { onEditEntry(entry) },
+                    onDeleteEntry: { onDeleteEntry(entry) },
                     allowsVoiceEditing: allowsVoiceEditing
                 )
             }
@@ -211,8 +336,11 @@ private struct EntryTimelineRow: View {
     let isLast: Bool
     @ObservedObject var appModel: AppModel
     let photoLibrary: any PhotoLibrary
+    let isBusy: Bool
     let onOpenPhoto: (PhotoAttachment, Int) -> Void
     let onEditVoice: (VoiceAttachment) -> Void
+    let onEditEntry: () -> Void
+    let onDeleteEntry: () -> Void
     let allowsVoiceEditing: Bool
 
     var body: some View {
@@ -237,15 +365,44 @@ private struct EntryTimelineRow: View {
             .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 8) {
-                Text(AppDateFormatting.entryTime(entry.createdAt, timeZone: entryTimeZone))
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(AppTheme.sage)
-                    .accessibilityLabel(
-                        AppDateFormatting.accessibleEntryTime(
-                            entry.createdAt,
-                            timeZone: entryTimeZone
+                HStack(alignment: .center, spacing: 8) {
+                    Text(AppDateFormatting.entryTime(entry.createdAt, timeZone: entryTimeZone))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(AppTheme.sage)
+                        .accessibilityLabel(
+                            AppDateFormatting.accessibleEntryTime(
+                                entry.createdAt,
+                                timeZone: entryTimeZone
+                            )
                         )
-                    )
+
+                    Spacer(minLength: 8)
+
+                    if isBusy {
+                        ProgressView()
+                            .controlSize(.small)
+                            .accessibilityLabel("正在处理这条记录")
+                    }
+
+                    Menu {
+                        Button(action: onEditEntry) {
+                            Label("编辑记录", systemImage: "pencil")
+                        }
+                        Button(role: .destructive, action: onDeleteEntry) {
+                            Label("删除记录", systemImage: "trash")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(AppTheme.mutedInk)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .disabled(isBusy)
+                    .accessibilityLabel("记录操作")
+                    .accessibilityHint(isBusy ? "正在处理这条记录" : "可以编辑或删除")
+                    .help("记录操作")
+                }
 
                 if !entry.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Text(entry.text)
@@ -304,6 +461,7 @@ private struct EntryTimelineRow: View {
                     .stroke(AppTheme.divider.opacity(0.55), lineWidth: 1)
             }
             .shadow(color: AppTheme.ink.opacity(0.04), radius: 10, y: 4)
+            .disabled(isBusy)
         }
         .accessibilityElement(children: .contain)
     }
@@ -570,6 +728,7 @@ struct VoiceTranscriptEditor: View {
         }
         .presentationDetents([.medium, .large])
         .interactiveDismissDisabled(isSaving)
+        .privacyProtectedPresentation()
     }
 }
 

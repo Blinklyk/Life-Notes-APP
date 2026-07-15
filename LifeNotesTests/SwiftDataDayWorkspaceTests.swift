@@ -575,16 +575,28 @@ final class SwiftDataDayWorkspaceTests: XCTestCase {
     }
 
     @MainActor
-    func testRetainedVoiceIDsProtectBothRecordAndPathIDsWhenMismatched() async throws {
+    func testRetainedVoiceIDsRejectMismatchedPathAfterValidatingOwnerScope() async throws {
         let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
         let workspace = SwiftDataDayWorkspace(modelContainer: container)
         let recordID = UUID()
         let pathID = UUID()
+        let entryID = UUID()
         let context = ModelContext(container)
+        context.insert(
+            EntryRecord(
+                id: entryID,
+                userID: userID,
+                dayKeyRawValue: 20260713,
+                createdAt: Date(timeIntervalSince1970: 1_752_384_000),
+                updatedAt: Date(timeIntervalSince1970: 1_752_384_000),
+                creationTimeZoneIdentifier: "Asia/Shanghai",
+                text: "合法的语音附件 owner"
+            )
+        )
         context.insert(
             VoiceAttachmentRecord(
                 id: recordID,
-                entryID: UUID(),
+                entryID: entryID,
                 userID: userID,
                 dayKeyRawValue: 20260713,
                 targetPhotoID: nil,
@@ -600,9 +612,12 @@ final class SwiftDataDayWorkspaceTests: XCTestCase {
         )
         try context.save()
 
-        let retainedIDs = try await workspace.allRetainedVoiceIDs()
-
-        XCTAssertEqual(retainedIDs, [recordID, pathID])
+        do {
+            _ = try await workspace.allRetainedVoiceIDs()
+            XCTFail("record ID 与 path ID 不一致时不应返回不可信的保留集合")
+        } catch let PersistenceMappingError.invalidVoiceStorageReference(path) {
+            XCTAssertEqual(path, VoiceAudioStoragePath.relativePath(for: pathID))
+        }
     }
 
     func testUpdateVoiceTranscriptChecksOwnerAndAdvancesEntryUpdatedAt() async throws {
@@ -778,6 +793,15 @@ final class SwiftDataDayWorkspaceTests: XCTestCase {
         let storeURL = storeDirectory.appendingPathComponent("legacy.store")
         let shanghai = try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
         let createdAt = try instant("2026-07-13T04:00:00Z")
+        let legacySchema = Schema(versionedSchema: LegacyEntrySchemaV1.self)
+        let legacyEntity = try XCTUnwrap(
+            legacySchema.entitiesByName["EntryRecord"]
+        )
+        XCTAssertNil(legacyEntity.attributesByName["revision"])
+        XCTAssertEqual(
+            legacyEntity.name,
+            Schema([EntryRecord.self]).entitiesByName["EntryRecord"]?.name
+        )
         try writeLegacyEntry(
             storeURL: storeURL,
             text: "旧版本的文字记录",
@@ -792,10 +816,963 @@ final class SwiftDataDayWorkspaceTests: XCTestCase {
         let workspace = SwiftDataDayWorkspace(modelContainer: migratedContainer)
         let day = DayKey(containing: createdAt, in: shanghai)
         let entries = try await workspace.entries(for: day, userID: userID)
+        let migrated = try XCTUnwrap(entries.first)
+        let updated = try await workspace.updateEntry(
+            id: migrated.id,
+            userID: userID,
+            edit: EntryEdit(
+                expectedRevision: migrated.revision,
+                text: "旧版本迁移后仍可编辑",
+                photoAnnotations: [],
+                voiceTranscripts: []
+            ),
+            updatedAt: createdAt.addingTimeInterval(60)
+        )
 
         XCTAssertEqual(entries.map(\.text), ["旧版本的文字记录"])
-        XCTAssertTrue(entries.first?.photos.isEmpty == true)
-        XCTAssertTrue(entries.first?.voices.isEmpty == true)
+        XCTAssertEqual(migrated.revision, 0)
+        XCTAssertTrue(migrated.photos.isEmpty)
+        XCTAssertTrue(migrated.voices.isEmpty)
+        XCTAssertEqual(updated.text, "旧版本迁移后仍可编辑")
+        XCTAssertEqual(updated.revision, 1)
+    }
+
+    func testAtomicEntryEditUpdatesCompleteEditableSnapshotAndNoOpKeepsRevision() async throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let workspace = SwiftDataDayWorkspace(modelContainer: container)
+        let shanghai = try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+        let photoA = UUID()
+        let photoB = UUID()
+        let retainedVoice = UUID()
+        let transcriptOnlyVoice = UUID()
+        let saved = try await workspace.create(
+            NewEntry(
+                text: "编辑前正文",
+                photos: [
+                    makePhoto(
+                        id: photoA,
+                        annotationText: "旧批注 A",
+                        originalRelativePath: "original/edit-a.heic",
+                        thumbnailRelativePath: "thumbnail/edit-a.jpg"
+                    ),
+                    makePhoto(
+                        id: photoB,
+                        annotationText: "旧批注 B",
+                        originalRelativePath: "original/edit-b.heic",
+                        thumbnailRelativePath: "thumbnail/edit-b.jpg"
+                    )
+                ],
+                voices: [
+                    makeVoice(
+                        id: retainedVoice,
+                        originalRelativePath: VoiceAudioStoragePath.relativePath(
+                            for: retainedVoice
+                        ),
+                        transcriptText: "旧转写 A",
+                        transcriptionStatus: .completed
+                    ),
+                    makeVoice(
+                        id: transcriptOnlyVoice,
+                        targetPhotoID: photoB,
+                        originalRelativePath: nil,
+                        transcriptText: "旧转写 B",
+                        transcriptionStatus: .completed,
+                        transcriptionSource: .manual,
+                        isTranscriptUserEdited: true
+                    )
+                ]
+            ),
+            userID: userID,
+            context: RecordingContext(
+                instant: try instant("2026-07-13T08:00:00Z"),
+                timeZone: shanghai
+            )
+        )
+        let updatedAt = try instant("2026-07-13T10:00:00Z")
+        let edit = EntryEdit(
+            expectedRevision: saved.revision,
+            text: "  编辑后正文  ",
+            photoAnnotations: [
+                EntryPhotoAnnotationEdit(photoID: photoB, annotationText: " 新批注 B "),
+                EntryPhotoAnnotationEdit(photoID: photoA, annotationText: " 新批注 A ")
+            ],
+            voiceTranscripts: [
+                EntryVoiceTranscriptEdit(
+                    voiceID: transcriptOnlyVoice,
+                    transcriptText: " 新转写 B ",
+                    transcriptionStatus: .completed,
+                    transcriptionSource: .manual,
+                    isTranscriptUserEdited: true,
+                    sourceLocaleIdentifier: " zh-Hans-CN "
+                ),
+                EntryVoiceTranscriptEdit(
+                    voiceID: retainedVoice,
+                    transcriptText: " 新转写 A ",
+                    transcriptionStatus: .completed,
+                    transcriptionSource: .onDevice,
+                    isTranscriptUserEdited: false,
+                    sourceLocaleIdentifier: "zh-CN"
+                )
+            ]
+        )
+
+        let updated = try await workspace.updateEntry(
+            id: saved.id,
+            userID: userID,
+            edit: edit,
+            updatedAt: updatedAt
+        )
+        let noOp = try await workspace.updateEntry(
+            id: saved.id,
+            userID: userID,
+            edit: EntryEdit(entry: updated),
+            updatedAt: try instant("2026-07-13T11:00:00Z")
+        )
+
+        XCTAssertEqual(saved.revision, 0)
+        XCTAssertEqual(updated.revision, 1)
+        XCTAssertEqual(updated.updatedAt, updatedAt)
+        XCTAssertEqual(updated.text, "编辑后正文")
+        XCTAssertEqual(updated.photos.map(\.id), [photoA, photoB])
+        XCTAssertEqual(updated.photos.map(\.annotationText), ["新批注 A", "新批注 B"])
+        XCTAssertEqual(
+            updated.voices.map(\.transcriptText),
+            ["新转写 A", "新转写 B"]
+        )
+        XCTAssertEqual(updated.voices.map(\.transcriptionStatus), [.completed, .completed])
+        XCTAssertEqual(updated.voices.map(\.transcriptionSource), [.manual, .manual])
+        XCTAssertTrue(updated.voices.allSatisfy(\.isTranscriptUserEdited))
+        XCTAssertEqual(updated.voices.first?.originalRelativePath, saved.voices.first?.originalRelativePath)
+        XCTAssertEqual(updated.voices.last?.targetPhotoID, photoB)
+        XCTAssertEqual(noOp, updated)
+    }
+
+    func testIncompleteEditSetsAndEmptyTranscriptOnlyVoiceDoNotPartiallyPersist() async throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let workspace = SwiftDataDayWorkspace(modelContainer: container)
+        let photoID = UUID()
+        let voiceID = UUID()
+        let createdAt = try instant("2026-07-13T08:00:00Z")
+        let day = try XCTUnwrap(DayKey(year: 2026, month: 7, day: 13))
+        let saved = try await workspace.create(
+            NewEntry(
+                text: "不可部分修改",
+                photos: [
+                    makePhoto(
+                        id: photoID,
+                        annotationText: "原批注",
+                        originalRelativePath: "original/atomic.heic",
+                        thumbnailRelativePath: "thumbnail/atomic.jpg"
+                    )
+                ],
+                voices: [
+                    makeVoice(
+                        id: voiceID,
+                        originalRelativePath: nil,
+                        transcriptText: "原转写",
+                        transcriptionStatus: .completed
+                    )
+                ]
+            ),
+            userID: userID,
+            context: RecordingContext(
+                instant: createdAt,
+                timeZone: try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+            )
+        )
+
+        do {
+            _ = try await workspace.updateEntry(
+                id: saved.id,
+                userID: userID,
+                edit: EntryEdit(
+                    expectedRevision: 0,
+                    text: "不应保存的新正文",
+                    photoAnnotations: [],
+                    voiceTranscripts: [
+                        EntryVoiceTranscriptEdit(
+                            voiceID: voiceID,
+                            transcriptText: "新转写",
+                            transcriptionStatus: .completed,
+                            transcriptionSource: .manual,
+                            isTranscriptUserEdited: true,
+                            sourceLocaleIdentifier: "zh-CN"
+                        )
+                    ]
+                ),
+                updatedAt: createdAt.addingTimeInterval(60)
+            )
+            XCTFail("缺少完整图片批注集合时不应保存")
+        } catch {
+            XCTAssertEqual(error as? DayWorkspaceError, .invalidPhotoAnnotationSet)
+        }
+
+        do {
+            _ = try await workspace.updateEntry(
+                id: saved.id,
+                userID: userID,
+                edit: EntryEdit(
+                    expectedRevision: 0,
+                    text: "不应保存的新正文",
+                    photoAnnotations: [
+                        EntryPhotoAnnotationEdit(photoID: photoID, annotationText: "新批注")
+                    ],
+                    voiceTranscripts: [
+                        EntryVoiceTranscriptEdit(
+                            voiceID: voiceID,
+                            transcriptText: "   ",
+                            transcriptionStatus: .completed,
+                            transcriptionSource: .manual,
+                            isTranscriptUserEdited: true,
+                            sourceLocaleIdentifier: "zh-CN"
+                        )
+                    ]
+                ),
+                updatedAt: createdAt.addingTimeInterval(120)
+            )
+            XCTFail("仅转写语音不能为空")
+        } catch {
+            XCTAssertEqual(
+                error as? EntryValidationError,
+                .transcriptOnlyVoiceRequiresTranscript
+            )
+        }
+
+        let reloadedEntries = try await workspace.entries(for: day, userID: userID)
+        let reloaded = try XCTUnwrap(reloadedEntries.first)
+        XCTAssertEqual(reloaded, saved)
+    }
+
+    func testTranscriptOnlyMutationPreservesEntryAndOtherVoiceWhileAdvancingRevision() async throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let workspace = SwiftDataDayWorkspace(modelContainer: container)
+        let firstVoiceID = UUID()
+        let secondVoiceID = UUID()
+        let createdAt = try instant("2026-07-13T08:00:00Z")
+        let saved = try await workspace.create(
+            NewEntry(
+                text: "正文不能丢",
+                voices: [
+                    makeVoice(
+                        id: firstVoiceID,
+                        originalRelativePath: VoiceAudioStoragePath.relativePath(for: firstVoiceID),
+                        transcriptText: "待修改"
+                    ),
+                    makeVoice(
+                        id: secondVoiceID,
+                        originalRelativePath: VoiceAudioStoragePath.relativePath(for: secondVoiceID),
+                        transcriptText: "保持原样"
+                    )
+                ]
+            ),
+            userID: userID,
+            context: RecordingContext(
+                instant: createdAt,
+                timeZone: try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+            )
+        )
+
+        _ = try await workspace.updateVoiceTranscript(
+            id: firstVoiceID,
+            userID: userID,
+            text: "只修改第一段",
+            status: .completed,
+            source: .manual,
+            isUserEdited: true,
+            sourceLocaleIdentifier: "zh-CN",
+            updatedAt: createdAt.addingTimeInterval(60)
+        )
+        let reloadedEntries = try await workspace.entries(
+            for: saved.dayKey,
+            userID: userID
+        )
+        let reloaded = try XCTUnwrap(reloadedEntries.first)
+
+        let ignoredAutomaticResult = try await workspace.updateVoiceTranscript(
+            id: firstVoiceID,
+            userID: userID,
+            text: "自动转写不得覆盖",
+            status: .completed,
+            source: .onDevice,
+            isUserEdited: false,
+            sourceLocaleIdentifier: "zh-CN",
+            updatedAt: createdAt.addingTimeInterval(120)
+        )
+        let afterIgnoredAutomaticEntries = try await workspace.entries(
+            for: saved.dayKey,
+            userID: userID
+        )
+        let afterIgnoredAutomatic = try XCTUnwrap(afterIgnoredAutomaticEntries.first)
+
+        let clearedEdit = EntryEdit(
+            expectedRevision: afterIgnoredAutomatic.revision,
+            text: afterIgnoredAutomatic.text,
+            photoAnnotations: [],
+            voiceTranscripts: afterIgnoredAutomatic.voices.map { voice in
+                EntryVoiceTranscriptEdit(
+                    voiceID: voice.id,
+                    transcriptText: voice.id == firstVoiceID ? "" : voice.transcriptText,
+                    transcriptionStatus: .completed,
+                    transcriptionSource: .onDevice,
+                    isTranscriptUserEdited: true,
+                    sourceLocaleIdentifier: voice.sourceLocaleIdentifier
+                )
+            }
+        )
+        let cleared = try await workspace.updateEntry(
+            id: saved.id,
+            userID: userID,
+            edit: clearedEdit,
+            updatedAt: createdAt.addingTimeInterval(180)
+        )
+
+        XCTAssertEqual(reloaded.revision, 1)
+        XCTAssertEqual(reloaded.text, "正文不能丢")
+        XCTAssertEqual(reloaded.photos, saved.photos)
+        XCTAssertEqual(reloaded.voices.map(\.transcriptText), ["只修改第一段", "保持原样"])
+        XCTAssertEqual(reloaded.voices.last, saved.voices.last)
+        XCTAssertEqual(ignoredAutomaticResult, reloaded.voices.first)
+        XCTAssertEqual(afterIgnoredAutomatic, reloaded)
+        XCTAssertEqual(cleared.revision, 2)
+        XCTAssertEqual(cleared.voices.first?.transcriptText, "")
+        XCTAssertEqual(cleared.voices.first?.transcriptionStatus, .notRequested)
+        XCTAssertNil(cleared.voices.first?.transcriptionSource)
+        XCTAssertFalse(cleared.voices.first?.isTranscriptUserEdited == true)
+        XCTAssertEqual(
+            cleared.voices.first?.originalRelativePath,
+            saved.voices.first?.originalRelativePath
+        )
+        XCTAssertEqual(cleared.voices.last, saved.voices.last)
+    }
+
+    @MainActor
+    func testPhotoAttachmentScopeCorruptionFailsClosedBeforeReadDeleteAndRetention() async throws {
+        for corruption in AttachmentScopeCorruption.allCases {
+            let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+            let seedWorkspace = SwiftDataDayWorkspace(modelContainer: container)
+            let photoID = UUID()
+            let saved = try await seedWorkspace.create(
+                NewEntry(
+                    text: "图片范围损坏测试",
+                    photos: [
+                        makePhoto(
+                            id: photoID,
+                            originalRelativePath: "original/photo-scope.heic",
+                            thumbnailRelativePath: "thumbnail/photo-scope.jpg"
+                        )
+                    ]
+                ),
+                userID: userID,
+                context: RecordingContext(
+                    instant: try instant("2026-07-13T08:00:00Z"),
+                    timeZone: try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+                )
+            )
+            let context = ModelContext(container)
+            let photoRecord = try XCTUnwrap(
+                try context.fetch(FetchDescriptor<PhotoAttachmentRecord>()).first
+            )
+            switch corruption {
+            case .entryID:
+                photoRecord.entryID = UUID()
+            case .userID:
+                photoRecord.userID = UUID()
+            case .dayKey:
+                photoRecord.dayKeyRawValue = 20_260_714
+            }
+            try context.save()
+
+            let workspace = SwiftDataDayWorkspace(modelContainer: container)
+            do {
+                _ = try await workspace.entries(for: saved.dayKey, userID: userID)
+                XCTFail("\(corruption) 损坏后不应读取图片附件")
+            } catch let PersistenceMappingError.invalidPhotoAttachmentScope(id) {
+                XCTAssertEqual(id, photoID)
+            }
+
+            do {
+                _ = try await workspace.deleteEntry(
+                    id: saved.id,
+                    userID: userID,
+                    expectedRevision: saved.revision,
+                    deletedAt: saved.createdAt.addingTimeInterval(60)
+                )
+                XCTFail("\(corruption) 损坏后不应删除主记录")
+            } catch let PersistenceMappingError.invalidPhotoAttachmentScope(id) {
+                XCTAssertEqual(id, photoID)
+            }
+
+            do {
+                _ = try await workspace.photoIDs(userID: userID)
+                XCTFail("\(corruption) 损坏后不应返回不可信的媒体保留集合")
+            } catch let PersistenceMappingError.invalidPhotoAttachmentScope(id) {
+                XCTAssertEqual(id, photoID)
+            }
+
+            XCTAssertEqual(
+                try context.fetchCount(FetchDescriptor<EntryRecord>()),
+                1
+            )
+            XCTAssertEqual(
+                try context.fetchCount(FetchDescriptor<PhotoAttachmentRecord>()),
+                1
+            )
+        }
+    }
+
+    @MainActor
+    func testVoiceAttachmentScopeAndTargetOwnerCorruptionFailClosed() async throws {
+        for corruption in VoiceAttachmentCorruption.allCases {
+            let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+            let seedWorkspace = SwiftDataDayWorkspace(modelContainer: container)
+            let sourcePhotoID = UUID()
+            let otherPhotoID = UUID()
+            let voiceID = UUID()
+            let recordingContext = RecordingContext(
+                instant: try instant("2026-07-13T08:00:00Z"),
+                timeZone: try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+            )
+            let saved = try await seedWorkspace.create(
+                NewEntry(
+                    text: "语音范围损坏测试",
+                    photos: [
+                        makePhoto(
+                            id: sourcePhotoID,
+                            originalRelativePath: "original/voice-owner.heic",
+                            thumbnailRelativePath: "thumbnail/voice-owner.jpg"
+                        )
+                    ],
+                    voices: [
+                        makeVoice(
+                            id: voiceID,
+                            targetPhotoID: sourcePhotoID,
+                            originalRelativePath: VoiceAudioStoragePath.relativePath(for: voiceID)
+                        )
+                    ]
+                ),
+                userID: userID,
+                context: recordingContext
+            )
+            _ = try await seedWorkspace.create(
+                NewEntry(
+                    text: "另一条记录",
+                    photos: [
+                        makePhoto(
+                            id: otherPhotoID,
+                            originalRelativePath: "original/other-owner.heic",
+                            thumbnailRelativePath: "thumbnail/other-owner.jpg"
+                        )
+                    ]
+                ),
+                userID: userID,
+                context: recordingContext
+            )
+
+            let context = ModelContext(container)
+            let voiceRecord = try XCTUnwrap(
+                try context.fetch(
+                    FetchDescriptor<VoiceAttachmentRecord>(
+                        predicate: #Predicate<VoiceAttachmentRecord> { record in
+                            record.id == voiceID
+                        }
+                    )
+                ).first
+            )
+            switch corruption {
+            case .entryID:
+                voiceRecord.entryID = UUID()
+            case .userID:
+                voiceRecord.userID = UUID()
+            case .dayKey:
+                voiceRecord.dayKeyRawValue = 20_260_714
+            case .targetPhotoOwner:
+                voiceRecord.targetPhotoID = otherPhotoID
+            }
+            try context.save()
+
+            let workspace = SwiftDataDayWorkspace(modelContainer: container)
+            do {
+                _ = try await workspace.entries(for: saved.dayKey, userID: userID)
+                XCTFail("\(corruption) 损坏后不应读取语音附件")
+            } catch {
+                assertVoiceCorruptionError(
+                    error,
+                    voiceID: voiceID,
+                    expectsTargetError: corruption == .targetPhotoOwner
+                )
+            }
+
+            do {
+                _ = try await workspace.deleteEntry(
+                    id: saved.id,
+                    userID: userID,
+                    expectedRevision: saved.revision,
+                    deletedAt: saved.createdAt.addingTimeInterval(60)
+                )
+                XCTFail("\(corruption) 损坏后不应删除主记录")
+            } catch {
+                assertVoiceCorruptionError(
+                    error,
+                    voiceID: voiceID,
+                    expectsTargetError: corruption == .targetPhotoOwner
+                )
+            }
+
+            do {
+                _ = try await workspace.retainedVoiceIDs(userID: userID)
+                XCTFail("\(corruption) 损坏后不应返回不可信的音频保留集合")
+            } catch {
+                assertVoiceCorruptionError(
+                    error,
+                    voiceID: voiceID,
+                    expectsTargetError: corruption == .targetPhotoOwner
+                )
+            }
+
+            XCTAssertEqual(
+                try context.fetchCount(FetchDescriptor<EntryRecord>()),
+                2
+            )
+            XCTAssertEqual(
+                try context.fetchCount(FetchDescriptor<VoiceAttachmentRecord>()),
+                1
+            )
+        }
+    }
+
+    @MainActor
+    func testConcurrentEditAndDeleteWithSameRevisionAllowsOnlyOneMutation() async throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let seedWorkspace = SwiftDataDayWorkspace(modelContainer: container)
+        let editWorkspace = SwiftDataDayWorkspace(modelContainer: container)
+        let deleteWorkspace = SwiftDataDayWorkspace(modelContainer: container)
+        let createdAt = try instant("2026-07-13T08:00:00Z")
+        let saved = try await seedWorkspace.create(
+            NewEntry(text: "并发前"),
+            userID: userID,
+            context: RecordingContext(
+                instant: createdAt,
+                timeZone: try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+            )
+        )
+        let edit = EntryEdit(
+            expectedRevision: saved.revision,
+            text: "并发编辑成功",
+            photoAnnotations: [],
+            voiceTranscripts: []
+        )
+        let requestedUserID = userID
+
+        async let edited: Entry? = try? await editWorkspace.updateEntry(
+            id: saved.id,
+            userID: requestedUserID,
+            edit: edit,
+            updatedAt: createdAt.addingTimeInterval(60)
+        )
+        async let deleted: Entry? = try? await deleteWorkspace.deleteEntry(
+            id: saved.id,
+            userID: requestedUserID,
+            expectedRevision: saved.revision,
+            deletedAt: createdAt.addingTimeInterval(60)
+        )
+        let (editedResult, deletedResult) = await (edited, deleted)
+        let successes = [editedResult, deletedResult].compactMap { $0 }
+        let remaining = try await seedWorkspace.entries(for: saved.dayKey, userID: userID)
+
+        XCTAssertEqual(successes.count, 1)
+        if let remainingEntry = remaining.first {
+            XCTAssertEqual(remaining.count, 1)
+            XCTAssertEqual(remainingEntry.text, "并发编辑成功")
+            XCTAssertEqual(remainingEntry.revision, 1)
+        } else {
+            XCTAssertTrue(remaining.isEmpty)
+            XCTAssertEqual(successes.first, saved)
+        }
+    }
+
+    @MainActor
+    func testDeleteReturnsSnapshotRemovesDatabaseRowsAndRetainsJournalPhoto() async throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let dayWorkspace = SwiftDataDayWorkspace(modelContainer: container)
+        let journalWorkspace = SwiftDataJournalWorkspace(modelContainer: container)
+        let photoID = UUID()
+        let voiceID = UUID()
+        let saved = try await dayWorkspace.create(
+            NewEntry(
+                text: "即将删除",
+                photos: [
+                    makePhoto(
+                        id: photoID,
+                        annotationText: "会进入日记",
+                        originalRelativePath: "original/journal-retained.heic",
+                        thumbnailRelativePath: "thumbnail/journal-retained.jpg"
+                    )
+                ],
+                voices: [
+                    makeVoice(
+                        id: voiceID,
+                        originalRelativePath: VoiceAudioStoragePath.relativePath(for: voiceID)
+                    )
+                ]
+            ),
+            userID: userID,
+            context: RecordingContext(
+                instant: try instant("2026-07-13T08:00:00Z"),
+                timeZone: try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+            )
+        )
+        let firstJournal = try await journalWorkspace.append(
+            NewJournalVersion(
+                title: "保留历史照片",
+                blocks: [JournalBlock(photo: try XCTUnwrap(saved.photos.first))],
+                origin: .generated,
+                sourceFingerprint: try JournalSourceFingerprint.make(entries: [saved]),
+                sourceEntryCount: 1,
+                createdAt: saved.createdAt.addingTimeInterval(60)
+            ),
+            for: saved.dayKey,
+            userID: userID
+        )
+
+        let snapshot = try await dayWorkspace.deleteEntry(
+            id: saved.id,
+            userID: userID,
+            expectedRevision: saved.revision,
+            deletedAt: saved.createdAt.addingTimeInterval(120)
+        )
+        let restoredJournal = try await journalWorkspace.append(
+            NewJournalVersion(
+                title: "删除记录后仍可恢复历史照片",
+                blocks: [JournalBlock(photo: try XCTUnwrap(snapshot.photos.first))],
+                origin: .restored,
+                sourceFingerprint: JournalSourceFingerprint(
+                    rawValue: String(repeating: "a", count: 64)
+                ),
+                sourceEntryCount: 1,
+                baseVersionID: firstJournal.currentVersion.id,
+                createdAt: saved.createdAt.addingTimeInterval(180)
+            ),
+            for: saved.dayKey,
+            userID: userID
+        )
+        let retainedPhotoIDs = try await dayWorkspace.photoIDs(userID: userID)
+        let retainedVoiceIDs = try await dayWorkspace.retainedVoiceIDs(userID: userID)
+        let remainingEntries = try await dayWorkspace.entries(
+            for: saved.dayKey,
+            userID: userID
+        )
+        let context = ModelContext(container)
+
+        XCTAssertEqual(snapshot, saved)
+        XCTAssertTrue(remainingEntries.isEmpty)
+        XCTAssertEqual(retainedPhotoIDs, [photoID])
+        XCTAssertTrue(retainedVoiceIDs.isEmpty)
+        XCTAssertEqual(restoredJournal.currentVersion.versionNumber, 2)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<EntryRecord>()), 0)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<PhotoAttachmentRecord>()), 0)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<VoiceAttachmentRecord>()), 0)
+    }
+
+    func testGeneratedAppendRevalidatesTextAndVoiceSourcesAfterDeletion() async throws {
+        let voiceID = UUID()
+        let scenarios: [(name: String, draft: NewEntry)] = [
+            ("纯文字", try NewEntry(text: "删除前的纯文字素材")),
+            (
+                "纯语音",
+                try NewEntry(
+                    text: "",
+                    voices: [
+                        makeVoice(
+                            id: voiceID,
+                            originalRelativePath: nil,
+                            transcriptText: "删除前的纯语音转写",
+                            transcriptionStatus: .completed
+                        )
+                    ]
+                )
+            ),
+        ]
+
+        for scenario in scenarios {
+            let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+            let dayWorkspace = SwiftDataDayWorkspace(modelContainer: container)
+            let journalWorkspace = SwiftDataJournalWorkspace(modelContainer: container)
+            let saved = try await dayWorkspace.create(
+                scenario.draft,
+                userID: userID,
+                context: RecordingContext(
+                    instant: try instant("2026-07-13T08:00:00Z"),
+                    timeZone: try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+                )
+            )
+            let generatedText = saved.text.isEmpty
+                ? try XCTUnwrap(saved.voices.first?.transcriptText)
+                : saved.text
+            let draft = NewJournalVersion(
+                title: "并发生成",
+                blocks: [JournalBlock(text: generatedText)],
+                origin: .generated,
+                sourceFingerprint: try JournalSourceFingerprint.make(entries: [saved]),
+                sourceEntryCount: 1,
+                createdAt: saved.createdAt.addingTimeInterval(60)
+            )
+            let gate = PersistenceTestGate()
+            let requestedUserID = userID
+            let appendTask = Task {
+                await gate.wait()
+                do {
+                    _ = try await journalWorkspace.append(
+                        draft,
+                        for: saved.dayKey,
+                        userID: requestedUserID
+                    )
+                    return GatedJournalAppendOutcome.saved
+                } catch JournalPersistenceError.sourceMaterialChanged {
+                    return GatedJournalAppendOutcome.sourceMaterialChanged
+                } catch {
+                    return GatedJournalAppendOutcome.unexpected(
+                        String(reflecting: error)
+                    )
+                }
+            }
+
+            await gate.waitUntilBlocked()
+            _ = try await dayWorkspace.deleteEntry(
+                id: saved.id,
+                userID: userID,
+                expectedRevision: saved.revision,
+                deletedAt: saved.createdAt.addingTimeInterval(60)
+            )
+            await gate.open()
+
+            let appendOutcome = await appendTask.value
+            XCTAssertEqual(appendOutcome, .sourceMaterialChanged, scenario.name)
+            let journal = try await journalWorkspace.journal(
+                for: saved.dayKey,
+                userID: userID
+            )
+            XCTAssertNil(journal, scenario.name)
+        }
+    }
+
+    func testDeletedPhotoCannotBecomeFirstJournalReference() async throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let dayWorkspace = SwiftDataDayWorkspace(modelContainer: container)
+        let journalWorkspace = SwiftDataJournalWorkspace(modelContainer: container)
+        let photoID = UUID()
+        let saved = try await dayWorkspace.create(
+            NewEntry(
+                text: "删除先发生",
+                photos: [
+                    makePhoto(
+                        id: photoID,
+                        originalRelativePath: "original/deleted-first.heic",
+                        thumbnailRelativePath: "thumbnail/deleted-first.jpg"
+                    )
+                ]
+            ),
+            userID: userID,
+            context: RecordingContext(
+                instant: try instant("2026-07-13T08:00:00Z"),
+                timeZone: try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+            )
+        )
+        _ = try await dayWorkspace.deleteEntry(
+            id: saved.id,
+            userID: userID,
+            expectedRevision: saved.revision,
+            deletedAt: saved.createdAt.addingTimeInterval(60)
+        )
+
+        do {
+            _ = try await journalWorkspace.append(
+                NewJournalVersion(
+                    title: "不应保存",
+                    blocks: [JournalBlock(photo: try XCTUnwrap(saved.photos.first))],
+                    origin: .edited,
+                    sourceFingerprint: JournalSourceFingerprint(
+                        rawValue: String(repeating: "c", count: 64)
+                    ),
+                    sourceEntryCount: 1,
+                    createdAt: saved.createdAt.addingTimeInterval(120)
+                ),
+                for: saved.dayKey,
+                userID: userID
+            )
+            XCTFail("已删除且从未进入日记历史的照片不应建立首个引用")
+        } catch {
+            XCTAssertEqual(
+                error as? JournalPersistenceError,
+                .unavailablePhotoReference(photoID)
+            )
+        }
+        let journal = try await journalWorkspace.journal(
+            for: saved.dayKey,
+            userID: userID
+        )
+        let retainedPhotoIDs = try await dayWorkspace.photoIDs(userID: userID)
+        XCTAssertNil(journal)
+        XCTAssertTrue(retainedPhotoIDs.isEmpty)
+    }
+
+    func testSearchNormalizesUnicodeWhitespaceUsesAndAcrossFieldsAndIsUserIsolated() async throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let workspace = SwiftDataDayWorkspace(modelContainer: container)
+        let shanghai = try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+        let createdAt = try instant("2026-07-13T08:00:00Z")
+        let context = RecordingContext(instant: createdAt, timeZone: shanghai)
+        let firstVoiceID = UUID()
+        let secondVoiceID = UUID()
+        let first = try await workspace.create(
+            NewEntry(
+                text: "Café　ＭＯＲＮＩＮＧ",
+                photos: [
+                    makePhoto(
+                        annotationText: "海边 日落",
+                        originalRelativePath: "original/search-a.heic",
+                        thumbnailRelativePath: "thumbnail/search-a.jpg"
+                    )
+                ],
+                voices: [
+                    makeVoice(
+                        id: firstVoiceID,
+                        originalRelativePath: nil,
+                        transcriptText: "晚 风",
+                        transcriptionStatus: .completed
+                    )
+                ]
+            ),
+            userID: userID,
+            context: context
+        )
+        let second = try await workspace.create(
+            NewEntry(
+                text: "CAFE morning",
+                photos: [
+                    makePhoto(
+                        annotationText: "海边",
+                        originalRelativePath: "original/search-b.heic",
+                        thumbnailRelativePath: "thumbnail/search-b.jpg"
+                    )
+                ],
+                voices: [
+                    makeVoice(
+                        id: secondVoiceID,
+                        originalRelativePath: nil,
+                        transcriptText: "风",
+                        transcriptionStatus: .completed
+                    )
+                ]
+            ),
+            userID: userID,
+            context: context
+        )
+        _ = try await workspace.create(
+            NewEntry(text: "cafe 但没有另一个词"),
+            userID: userID,
+            context: context
+        )
+        _ = try await workspace.create(
+            NewEntry(text: "CAFE MORNING 海边 风"),
+            userID: UUID(),
+            context: context
+        )
+
+        let folded = try await workspace.searchEntries(
+            matching: "  cafe\nＭＯＲＮＩＮＧ  ",
+            userID: userID
+        )
+        let acrossFields = try await workspace.searchEntries(
+            matching: "海边\t风",
+            userID: userID
+        )
+        let expectedIDs = [first.id, second.id].sorted {
+            $0.uuidString > $1.uuidString
+        }
+        let emptyResults = try await workspace.searchEntries(
+            matching: "   ",
+            userID: userID
+        )
+        let missingTermResults = try await workspace.searchEntries(
+            matching: "海边 不存在",
+            userID: userID
+        )
+
+        XCTAssertEqual(folded.map(\.id), expectedIDs)
+        XCTAssertEqual(acrossFields.map(\.id), expectedIDs)
+        XCTAssertTrue(emptyResults.isEmpty)
+        XCTAssertTrue(missingTermResults.isEmpty)
+    }
+
+    func testEntryMutationsTreatAnotherUsersEntryAsNotFound() async throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let workspace = SwiftDataDayWorkspace(modelContainer: container)
+        let saved = try await workspace.create(
+            NewEntry(text: "只属于当前用户"),
+            userID: userID,
+            context: RecordingContext(
+                instant: try instant("2026-07-13T08:00:00Z"),
+                timeZone: try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+            )
+        )
+        let otherUserID = UUID()
+
+        do {
+            _ = try await workspace.updateEntry(
+                id: saved.id,
+                userID: otherUserID,
+                edit: EntryEdit(
+                    expectedRevision: saved.revision,
+                    text: "越权修改",
+                    photoAnnotations: [],
+                    voiceTranscripts: []
+                ),
+                updatedAt: saved.updatedAt.addingTimeInterval(60)
+            )
+            XCTFail("其他用户不应能修改记录")
+        } catch {
+            XCTAssertEqual(error as? DayWorkspaceError, .entryNotFound)
+        }
+
+        do {
+            _ = try await workspace.deleteEntry(
+                id: saved.id,
+                userID: otherUserID,
+                expectedRevision: saved.revision,
+                deletedAt: saved.updatedAt.addingTimeInterval(60)
+            )
+            XCTFail("其他用户不应能删除记录")
+        } catch {
+            XCTAssertEqual(error as? DayWorkspaceError, .entryNotFound)
+        }
+
+        let reloadedEntries = try await workspace.entries(
+            for: saved.dayKey,
+            userID: userID
+        )
+        XCTAssertEqual(reloadedEntries, [saved])
+    }
+
+    private func assertVoiceCorruptionError(
+        _ error: Error,
+        voiceID: UUID,
+        expectsTargetError: Bool,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        if expectsTargetError {
+            guard case let PersistenceMappingError.invalidVoiceTargetPhoto(id) = error else {
+                XCTFail("预期语音目标图片范围错误，实际为 \(error)", file: file, line: line)
+                return
+            }
+            XCTAssertEqual(id, voiceID, file: file, line: line)
+        } else {
+            guard case let PersistenceMappingError.invalidVoiceAttachmentScope(id) = error else {
+                XCTFail("预期语音附件范围错误，实际为 \(error)", file: file, line: line)
+                return
+            }
+            XCTAssertEqual(id, voiceID, file: file, line: line)
+        }
     }
 
     private func writePersistentEntry(
@@ -823,7 +1800,7 @@ final class SwiftDataDayWorkspaceTests: XCTestCase {
         createdAt: Date,
         timeZone: TimeZone
     ) throws {
-        let schema = Schema([EntryRecord.self])
+        let schema = Schema(versionedSchema: LegacyEntrySchemaV1.self)
         let configuration = ModelConfiguration(
             "LegacyMigration",
             schema: schema,
@@ -834,7 +1811,7 @@ final class SwiftDataDayWorkspaceTests: XCTestCase {
         let context = ModelContext(container)
         let day = DayKey(containing: createdAt, in: timeZone)
         context.insert(
-            EntryRecord(
+            LegacyEntrySchemaV1.EntryRecord(
                 id: UUID(),
                 userID: userID,
                 dayKeyRawValue: day.storageValue,
@@ -897,5 +1874,104 @@ final class SwiftDataDayWorkspaceTests: XCTestCase {
 
     private func instant(_ value: String) throws -> Date {
         try XCTUnwrap(ISO8601DateFormatter().date(from: value))
+    }
+}
+
+private enum GatedJournalAppendOutcome: Equatable, Sendable {
+    case saved
+    case sourceMaterialChanged
+    case unexpected(String)
+}
+
+private enum AttachmentScopeCorruption: CaseIterable {
+    case entryID
+    case userID
+    case dayKey
+}
+
+private enum VoiceAttachmentCorruption: CaseIterable {
+    case entryID
+    case userID
+    case dayKey
+    case targetPhotoOwner
+}
+
+private actor PersistenceTestGate {
+    private var isBlocked = false
+    private var isOpen = false
+    private var blockedWaiters: [CheckedContinuation<Void, Never>] = []
+    private var gateWaiters: [CheckedContinuation<Void, Never>] = []
+
+    func wait() async {
+        isBlocked = true
+        let arrivals = blockedWaiters
+        blockedWaiters.removeAll()
+        for continuation in arrivals {
+            continuation.resume()
+        }
+        guard !isOpen else {
+            return
+        }
+        await withCheckedContinuation { continuation in
+            gateWaiters.append(continuation)
+        }
+    }
+
+    func waitUntilBlocked() async {
+        guard !isBlocked else {
+            return
+        }
+        await withCheckedContinuation { continuation in
+            blockedWaiters.append(continuation)
+        }
+    }
+
+    func open() {
+        isOpen = true
+        let waiters = gateWaiters
+        gateWaiters.removeAll()
+        for continuation in waiters {
+            continuation.resume()
+        }
+    }
+}
+
+private enum LegacyEntrySchemaV1: VersionedSchema {
+    static let versionIdentifier = Schema.Version(1, 0, 0)
+
+    static var models: [any PersistentModel.Type] {
+        [EntryRecord.self]
+    }
+
+    @Model
+    final class EntryRecord {
+        @Attribute(.unique) var id: UUID
+        var userID: UUID
+        var sourceDraftID: UUID? = nil
+        var dayKeyRawValue: Int
+        var createdAt: Date
+        var updatedAt: Date
+        var creationTimeZoneIdentifier: String
+        var text: String
+
+        init(
+            id: UUID,
+            userID: UUID,
+            sourceDraftID: UUID? = nil,
+            dayKeyRawValue: Int,
+            createdAt: Date,
+            updatedAt: Date,
+            creationTimeZoneIdentifier: String,
+            text: String
+        ) {
+            self.id = id
+            self.userID = userID
+            self.sourceDraftID = sourceDraftID
+            self.dayKeyRawValue = dayKeyRawValue
+            self.createdAt = createdAt
+            self.updatedAt = updatedAt
+            self.creationTimeZoneIdentifier = creationTimeZoneIdentifier
+            self.text = text
+        }
     }
 }

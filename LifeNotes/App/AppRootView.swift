@@ -5,6 +5,7 @@ struct AppRootView: View {
     @ObservedObject var appModel: AppModel
     @ObservedObject var calendarModel: CalendarModel
     @ObservedObject var journalModel: JournalModel
+    @ObservedObject var entryLibraryModel: EntryLibraryModel
     @StateObject private var privacyGate = PrivacyGateModel()
     @State private var hasCompletedInitialUnlock = false
 
@@ -14,6 +15,13 @@ struct AppRootView: View {
                 .privacySensitive()
                 .allowsHitTesting(!shouldCoverContent)
                 .accessibilityHidden(shouldCoverContent)
+                .alert(item: $entryLibraryModel.alert) { alert in
+                    Alert(
+                        title: Text("随心记"),
+                        message: Text(alert.message),
+                        dismissButton: .default(Text("好"))
+                    )
+                }
 
             if shouldCoverContent {
                 PrivacyGateView(model: privacyGate)
@@ -21,6 +29,7 @@ struct AppRootView: View {
                     .zIndex(1)
             }
         }
+        .environmentObject(privacyGate)
         .animation(.easeInOut(duration: 0.2), value: shouldCoverContent)
         .onChange(of: privacyGate.state) { _, newState in
             if newState == .unlocked, !hasCompletedInitialUnlock {
@@ -29,6 +38,7 @@ struct AppRootView: View {
             }
         }
         .onChange(of: scenePhase) { _, newPhase in
+            privacyGate.setSceneActive(newPhase == .active)
             if newPhase != .active {
                 appModel.handleSceneDeactivation(
                     isEnteringBackground: newPhase == .background
@@ -41,8 +51,17 @@ struct AppRootView: View {
             }
         }
         .task {
+            privacyGate.setSceneActive(scenePhase == .active)
             if scenePhase == .active {
                 await privacyGate.unlock()
+            }
+        }
+        .onChange(of: entryLibraryModel.mutationEvent) { _, event in
+            guard let event else {
+                return
+            }
+            Task {
+                await refreshAfterEntryMutation(event)
             }
         }
         .alert(item: $appModel.alert) { alert in
@@ -55,7 +74,7 @@ struct AppRootView: View {
     }
 
     private var shouldCoverContent: Bool {
-        privacyGate.state != .unlocked || scenePhase != .active
+        privacyGate.isContentCovered
     }
 
     @ViewBuilder
@@ -66,14 +85,30 @@ struct AppRootView: View {
         case .today:
             TodayView(
                 appModel: appModel,
-                journalModel: journalModel
+                journalModel: journalModel,
+                entryLibraryModel: entryLibraryModel
             )
         case .calendar:
             CalendarView(
                 appModel: appModel,
                 calendarModel: calendarModel,
-                journalModel: journalModel
+                journalModel: journalModel,
+                entryLibraryModel: entryLibraryModel
             )
+        }
+    }
+
+    private func refreshAfterEntryMutation(
+        _ event: EntryLibraryModel.MutationEvent
+    ) async {
+        await appModel.refreshToday(showError: false)
+        await calendarModel.loadMonth(showError: false)
+
+        if calendarModel.detail?.dayKey == event.dayKey {
+            await calendarModel.loadDetail(for: event.dayKey, showError: false)
+        }
+        if journalModel.selectedDay == event.dayKey {
+            await journalModel.load(day: event.dayKey, showError: false)
         }
     }
 }

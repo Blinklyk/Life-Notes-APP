@@ -5,6 +5,9 @@ struct DayDetailView: View {
     @ObservedObject var appModel: AppModel
     @ObservedObject var calendarModel: CalendarModel
     @ObservedObject var journalModel: JournalModel
+    @ObservedObject var entryLibraryModel: EntryLibraryModel
+    let onEditEntry: (Entry) -> Void
+    let onDeleteEntry: (Entry) -> Void
     @State private var presentedPhoto: FullScreenPhotoItem?
 
     var body: some View {
@@ -108,6 +111,7 @@ struct DayDetailView: View {
                     timeZone: .autoupdatingCurrent,
                     appModel: appModel,
                     photoLibrary: appModel.photoLibrary,
+                    busyEntryIDs: entryLibraryModel.busyEntryIDs,
                     onOpenPhoto: { photo, position in
                         presentedPhoto = FullScreenPhotoItem(
                             id: photo.id,
@@ -116,6 +120,8 @@ struct DayDetailView: View {
                         )
                     },
                     onEditVoice: { _ in },
+                    onEditEntry: onEditEntry,
+                    onDeleteEntry: onDeleteEntry,
                     allowsVoiceEditing: false
                 )
                 .padding(.top, 18)

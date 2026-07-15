@@ -115,6 +115,7 @@ struct DayStateEditor: View {
         }
         .presentationDetents([.medium, .large])
         .interactiveDismissDisabled(isSettingFeeling)
+        .privacyProtectedPresentation()
     }
 
     private func feelingButton(expands: Bool) -> some View {

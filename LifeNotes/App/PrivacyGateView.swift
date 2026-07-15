@@ -75,3 +75,29 @@ struct PrivacyGateView: View {
         }
     }
 }
+
+private struct PrivacyProtectedPresentationModifier: ViewModifier {
+    @EnvironmentObject private var privacyGate: PrivacyGateModel
+
+    func body(content: Content) -> some View {
+        ZStack {
+            content
+                .privacySensitive()
+                .allowsHitTesting(!privacyGate.isContentCovered)
+                .accessibilityHidden(privacyGate.isContentCovered)
+
+            if privacyGate.isContentCovered {
+                PrivacyGateView(model: privacyGate)
+                    .transition(.opacity)
+                    .zIndex(1)
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: privacyGate.isContentCovered)
+    }
+}
+
+extension View {
+    func privacyProtectedPresentation() -> some View {
+        modifier(PrivacyProtectedPresentationModifier())
+    }
+}

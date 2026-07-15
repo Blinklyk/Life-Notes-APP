@@ -234,6 +234,93 @@ struct VoiceAttachment: Identifiable, Hashable, Sendable {
     }
 }
 
+struct EntryPhotoAnnotationEdit: Identifiable, Hashable, Sendable {
+    let photoID: UUID
+    let annotationText: String
+
+    var id: UUID { photoID }
+
+    init(photoID: UUID, annotationText: String) {
+        self.photoID = photoID
+        self.annotationText = annotationText.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+    }
+}
+
+struct EntryVoiceTranscriptEdit: Identifiable, Hashable, Sendable {
+    let voiceID: UUID
+    let transcriptText: String
+    let transcriptionStatus: VoiceTranscriptionStatus
+    let transcriptionSource: VoiceTranscriptionSource?
+    let isTranscriptUserEdited: Bool
+    let sourceLocaleIdentifier: String
+
+    var id: UUID { voiceID }
+
+    init(
+        voiceID: UUID,
+        transcriptText: String,
+        transcriptionStatus: VoiceTranscriptionStatus,
+        transcriptionSource: VoiceTranscriptionSource?,
+        isTranscriptUserEdited: Bool,
+        sourceLocaleIdentifier: String
+    ) {
+        self.voiceID = voiceID
+        self.transcriptText = transcriptText.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        self.transcriptionStatus = transcriptionStatus
+        self.transcriptionSource = transcriptionSource
+        self.isTranscriptUserEdited = isTranscriptUserEdited
+        self.sourceLocaleIdentifier = sourceLocaleIdentifier.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+    }
+}
+
+struct EntryEdit: Equatable, Sendable {
+    let expectedRevision: Int
+    let text: String
+    let photoAnnotations: [EntryPhotoAnnotationEdit]
+    let voiceTranscripts: [EntryVoiceTranscriptEdit]
+
+    init(
+        expectedRevision: Int,
+        text: String,
+        photoAnnotations: [EntryPhotoAnnotationEdit],
+        voiceTranscripts: [EntryVoiceTranscriptEdit]
+    ) {
+        self.expectedRevision = expectedRevision
+        self.text = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.photoAnnotations = photoAnnotations
+        self.voiceTranscripts = voiceTranscripts
+    }
+
+    init(entry: Entry) {
+        self.init(
+            expectedRevision: entry.revision,
+            text: entry.text,
+            photoAnnotations: entry.photos.map {
+                EntryPhotoAnnotationEdit(
+                    photoID: $0.id,
+                    annotationText: $0.annotationText
+                )
+            },
+            voiceTranscripts: entry.voices.map {
+                EntryVoiceTranscriptEdit(
+                    voiceID: $0.id,
+                    transcriptText: $0.transcriptText,
+                    transcriptionStatus: $0.transcriptionStatus,
+                    transcriptionSource: $0.transcriptionSource,
+                    isTranscriptUserEdited: $0.isTranscriptUserEdited,
+                    sourceLocaleIdentifier: $0.sourceLocaleIdentifier
+                )
+            }
+        )
+    }
+}
+
 struct Entry: Identifiable, Hashable, Sendable {
     let id: UUID
     let userID: UUID
@@ -241,6 +328,7 @@ struct Entry: Identifiable, Hashable, Sendable {
     let dayKey: DayKey
     let createdAt: Date
     let updatedAt: Date
+    let revision: Int
     let creationTimeZoneIdentifier: String
     let text: String
     let photos: [PhotoAttachment]
@@ -253,6 +341,7 @@ struct Entry: Identifiable, Hashable, Sendable {
         dayKey: DayKey,
         createdAt: Date,
         updatedAt: Date,
+        revision: Int = 0,
         creationTimeZoneIdentifier: String,
         text: String,
         photos: [PhotoAttachment] = [],
@@ -264,9 +353,51 @@ struct Entry: Identifiable, Hashable, Sendable {
         self.dayKey = dayKey
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.revision = revision
         self.creationTimeZoneIdentifier = creationTimeZoneIdentifier
         self.text = text
         self.photos = photos
         self.voices = voices
+    }
+}
+
+enum EntrySearch {
+    static func terms(in query: String) -> [String] {
+        let normalized = normalizedText(query)
+        guard !normalized.isEmpty else {
+            return []
+        }
+        var seen: Set<String> = []
+        return normalized.split(separator: " ").compactMap { substring in
+            let term = String(substring)
+            return seen.insert(term).inserted ? term : nil
+        }
+    }
+
+    static func matches(_ entry: Entry, query: String) -> Bool {
+        matches(entry, terms: terms(in: query))
+    }
+
+    static func matches(_ entry: Entry, terms: [String]) -> Bool {
+        guard !terms.isEmpty else {
+            return false
+        }
+        let searchableText = normalizedText(
+            ([entry.text]
+                + entry.photos.map(\.annotationText)
+                + entry.voices.map(\.transcriptText))
+                .joined(separator: " ")
+        )
+        return terms.allSatisfy(searchableText.contains)
+    }
+
+    static func normalizedText(_ text: String) -> String {
+        text
+            .split(whereSeparator: \.isWhitespace)
+            .joined(separator: " ")
+            .folding(
+                options: [.caseInsensitive, .diacriticInsensitive, .widthInsensitive],
+                locale: Locale(identifier: "en_US_POSIX")
+            )
     }
 }

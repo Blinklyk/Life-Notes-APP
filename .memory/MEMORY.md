@@ -293,3 +293,38 @@
 - 当前生成器为可离线工作的本地事实型实现，真实 OpenAI 生成将在 Windows 后端阶段接入，API key 只保存在后端。
 - 仍需在 Simulator 或真机人工检查 Face ID 返回后 sheet 保活、Dynamic Type、VoiceOver 和键盘交互。
 - 下一阶段实现随心记录编辑、删除与全文搜索。
+
+## 2026-07-15：随心记录编辑、删除与全文搜索闭环
+
+### 用户要求
+
+- 继续实现初代全部功能，本阶段完成随心记录编辑、删除与搜索。
+- 每完成一项更新 `README.md` 和项目 memory，并创建一次中文 Conventional Commit。
+- 后续按任务 `019f64a1-2216-7812-993d-1ca7c37c2d03` 的结论调整：跳过 Windows 专用宿主，在 macOS 开发 Linux-ready 后端，与 iPhone 联调后直接迁云。
+
+### 本次实际修改
+
+- Today、历史日期详情和跨日期搜索结果均可编辑或永久删除随心记录；编辑范围为正文、逐图文字批注和语音转写，媒体成员与顺序保持不变。
+- 新增正文、图片批注、语音转写全文搜索，支持 Unicode 大小写、音调和宽度折叠、多词 AND、稳定倒序及用户隔离。
+- `Entry` 与 `EntryRecord` 新增单调 revision；编辑和删除使用乐观并发，删除保留用户确认时快照，不会静默升级 revision 后删除较新内容。
+- 删除先提交 SwiftData，再读取所有用户记录及全部日记历史引用，逐项清理无引用照片和原音；历史日记引用继续保留，媒体清理失败只提示不回滚。
+- Today、月历、历史详情和日记素材 fingerprint 在 mutation 后统一刷新；编辑预读、搜索、编辑/删除迟到响应和自动转写均有 generation 或 revision 保护。
+- generated 日记 append 与记录删除使用同一持久化临界区，并按 live entries 重验 fingerprint/count，纯文字或纯语音记录删除后在途生成不会迟到落库。
+- 新增统一附件快照校验，photo/voice 的 entryID、userID、dayKey 及 voice target photo owner 损坏时 fail closed。
+- 使用冻结的 V1 SwiftData schema 建立真实无 revision 磁盘 fixture，验证自动迁移为 revision 0 并可继续编辑至 revision 1。
+- 共享隐私门覆盖记录/日记编辑、日记历史、语音编辑、每日状态和全屏照片等独立 presentation，后台时禁用交互并保留未保存稿。
+
+### 验证
+
+- 全量 Swift parse、`plutil -lint LifeNotes.xcodeproj/project.pbxproj` 与 `git diff --check` 通过。
+- Xcode 26.6 / Swift 6 完整严格并发与 warnings-as-errors 的 `build-for-testing` 通过。
+- iPhone 17 Pro / iOS 26.5 Simulator 通过 Xcode 执行 186 项单元与集成测试，186 项通过；报告为 `Test-LifeNotes-2026.07.15_16-08-39-+0800.xcresult`。
+- 首次全量运行暴露两个旧夹具与新不变量冲突；修正为合法 owner 下的路径损坏 fail-closed 和非 generated 历史损坏后，第二次全量回归 0 失败。
+
+### 风险与待办
+
+- 当前 Simulator 已设置设备密码并直接进入密码回退页，未知密码下无法完成 Face ID 返回后 presentation 保活、Dynamic Type、VoiceOver 和键盘的人工验收；自动化和共享隐私门严格构建已通过，真机仍需补验。
+- 搜索当前在本地全量扫描记录与附件，数据规模增大后需要索引、分页和持久层取消检查。
+- 编辑稿保留于进程内；进入后台会隐私覆盖，但若系统终止进程，未保存编辑仍会丢失。
+- 下一阶段按最新决定在 macOS 实现跨平台、Linux-ready、容器化 AI 后端；AI 代理只发送文字、图片批注和语音转写，不发送本机路径，API key 只在后端环境变量或 secret 中保存。
+- 云同步与多设备同步作为独立阶段，需要 tombstone、离线 outbox、服务端 cursor、认证、对象存储和冲突合并，不能与首个 AI 接口混为一体。

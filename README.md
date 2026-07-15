@@ -19,13 +19,14 @@ Life Notes App
 - 自动生成、重新生成和手动编辑每日随心日记
 - 月历浏览、日期详情和有记录日期提示
 - 每日心情选择和“重要的一天”标记
+- 随心记录编辑、永久删除和跨日期全文搜索
 - 本地持久化与媒体文件管理
 
 完整产品定义见 [docs/PRODUCT.md](docs/PRODUCT.md)，技术边界见 [docs/TECHNICAL-DESIGN.md](docs/TECHNICAL-DESIGN.md)，统一领域语言见 [CONTEXT.md](CONTEXT.md)。
 
 ## 当前状态
 
-项目已创建 iOS 17+ 原生 SwiftUI 工程 [LifeNotes.xcodeproj](LifeNotes.xcodeproj)，当前已实现六个本地纵向闭环：
+项目已创建 iOS 17+ 原生 SwiftUI 工程 [LifeNotes.xcodeproj](LifeNotes.xcodeproj)，当前已实现七个本地纵向闭环：
 
 `启动并解锁 → 立即记录纯文字 → SwiftData 本地保存 → 进入今天页 → 重启后仍可读取`
 
@@ -38,6 +39,8 @@ Life Notes App
 `从今天进入月历 → 查看记录点、五瓣花与重要日 → 打开任意日期详情 → 回看完整时间线并修改每日状态 → 返回月历立即同步`
 
 `读取某日全部原始素材 → 本地事实型生成随心日记 → 完整编辑图文块 → 重新生成或恢复历史版本 → 月历显示日记标记`
+
+`从今天、历史日期或搜索结果打开随心记录 → 编辑正文、逐图批注和语音转写 → revision 冲突保护 → 永久删除并安全清理媒体 → 全文搜索立即同步`
 
 图片闭环包含以下约束：
 
@@ -69,7 +72,7 @@ Life Notes App
 - 月历固定使用周一开头的 7×6 网格，支持闰年、跨年、前后月和回到本月；相邻月份的可见日期也展示真实摘要并可进入详情。
 - 日期格用小圆点表示有记录但未设置感受，用一至五片填充花瓣表示每日感受；重要日爱心和随心日记文档标记保持独立。
 - 每月只批量查询可见 42 天范围内的记录与每日状态，不逐日发起 42 次读取，也不加载图片、语音或缩略图。
-- 日期详情可查看完整文字、照片、逐图批注、语音和转写；历史记录本阶段只读，但每日感受和重要日可修改并立即回写月历。
+- 日期详情可查看完整文字、照片、逐图批注、语音和转写；历史记录、每日感受和重要日均可修改并立即回写月历。
 - 每条历史记录按保存的创建时区显示时间；快速切月、切日期、迟到刷新、跨日期保存和 A→B→A mutation 均有 generation 保护。
 - “今天 / 立即记录 / 日历”使用统一底部导航；月份加载期间旧日期格不可点击，避免切月结果清空正在打开的详情。
 
@@ -84,9 +87,19 @@ Life Notes App
 - App 进入 inactive/background 时以隐私层覆盖并保活当前页面和编辑稿；保存或恢复期间整页锁定，避免迟到输入丢失。
 - SwiftData 日记读写按进程串行形成完整快照；损坏日记只隐藏对应日期标记，其他月历日期仍可读取，历史版本引用照片也会继续保留。
 
-工程包含 `LifeNotes` App target 与 `LifeNotesTests` 单元测试 target。当前在 Xcode 26.6、Swift 6 严格并发及 warnings-as-errors 下通过 157 项单元与集成测试；日记多 context 读写交错、历史照片保留和异步竞态均已覆盖。开发环境最低需要 Xcode 15，并安装 iOS 17+ Simulator runtime。
+记录库闭环包含以下约束：
 
-下一项实现为随心记录编辑、删除与全文搜索；之后接入 Windows 后端、Tailscale、真实 AI 和多设备同步。
+- 今天、历史日期和搜索结果使用同一编辑器，可修改正文、逐图文字批注和语音转写；当前编辑不会改变媒体成员或顺序。
+- 每条记录使用单调 `revision` 做乐观并发控制；删除确认保留用户看到的 revision，确认后若记录已变化会拒绝删除并要求刷新。
+- 永久删除先提交 SwiftData，再按所有用户记录与全部日记历史的全局引用清理无引用照片和原音；清理失败只显示可关闭提示，不回滚业务删除。
+- 全文搜索覆盖正文、图片批注和语音转写，支持 Unicode 大小写、音调和宽度折叠、多词 AND 匹配及稳定倒序，并严格隔离本地用户。
+- 编辑或删除会刷新今天、月历、历史详情和日记素材 fingerprint；自动转写不会覆盖人工转写，删除也不会让在途生成重新保留已删除的纯文字或语音素材。
+- 附件读取与写入会校验 `entryID`、`userID`、`dayKey` 和语音目标照片 owner；旧版无 `revision` 的磁盘 store 可迁移为 revision 0 后继续编辑。
+- App 进入 inactive/background 时，记录编辑器、日记编辑器、历史、语音、每日状态和全屏照片等独立 presentation 都由共享隐私门覆盖并禁用交互。
+
+工程包含 `LifeNotes` App target 与 `LifeNotesTests` 单元测试 target。当前在 Xcode 26.6、Swift 6 完整严格并发及 warnings-as-errors 下通过 186 项单元与集成测试；最新 Xcode 报告为 `Test-LifeNotes-2026.07.15_16-08-39-+0800.xcresult`，运行于 iPhone 17 Pro / iOS 26.5 Simulator。开发环境最低需要 Xcode 15，并安装 iOS 17+ Simulator runtime。
+
+下一阶段跳过 Windows 专用宿主：先在 macOS 开发并联调面向 Linux 云环境的跨平台 AI 后端，Simulator 直连 Mac，真机通过局域网或 Tailscale 访问；验证后把同一容器直接部署到云端。真实 AI 代理与云同步、多设备冲突合并分阶段实现，OpenAI API key 只保存在后端。
 
 准备在 macOS 上继续开发时，请从 [docs/MACOS-START.md](docs/MACOS-START.md) 开始，并先阅读根目录 [AGENTS.md](AGENTS.md)。
 

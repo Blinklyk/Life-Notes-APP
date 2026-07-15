@@ -53,7 +53,6 @@ actor SwiftDataJournalWorkspace: JournalWorkspace {
                 draft.sourceEntryCount
             )
         }
-
         if let existingVersion = try versionRecord(id: draft.id) {
             guard
                 existingVersion.scopeKey == scopeKey,
@@ -74,6 +73,14 @@ actor SwiftDataJournalWorkspace: JournalWorkspace {
             }
             return loaded
         }
+
+        try validateGeneratedSource(draft, day: day, userID: userID)
+        try validatePhotoReferences(
+            in: draft.blocks,
+            scopeKey: scopeKey,
+            day: day,
+            userID: userID
+        )
 
         let targetJournal: JournalRecord
         let nextVersionNumber: Int
@@ -207,6 +214,119 @@ actor SwiftDataJournalWorkspace: JournalWorkspace {
             }
         )
         return try modelContext.fetch(descriptor)
+    }
+
+    private func validateGeneratedSource(
+        _ draft: NewJournalVersion,
+        day: DayKey,
+        userID: UUID
+    ) throws {
+        guard draft.origin == .generated else {
+            return
+        }
+
+        let requestedUserID = userID
+        let requestedDayKey = day.storageValue
+        let entryDescriptor = FetchDescriptor<EntryRecord>(
+            predicate: #Predicate<EntryRecord> { record in
+                record.userID == requestedUserID
+                    && record.dayKeyRawValue == requestedDayKey
+            }
+        )
+        let entryRecords = try modelContext.fetch(entryDescriptor)
+        let entryIDs = Set(entryRecords.map(\.id))
+        let photoRecords = try modelContext.fetch(
+            FetchDescriptor<PhotoAttachmentRecord>()
+        ).filter {
+            entryIDs.contains($0.entryID)
+                || ($0.userID == userID && $0.dayKeyRawValue == requestedDayKey)
+        }
+        let voiceRecords = try modelContext.fetch(
+            FetchDescriptor<VoiceAttachmentRecord>()
+        ).filter {
+            entryIDs.contains($0.entryID)
+                || ($0.userID == userID && $0.dayKeyRawValue == requestedDayKey)
+        }
+        let entries = try EntryPersistenceSnapshot.entries(
+            entryRecords: entryRecords,
+            photoRecords: photoRecords,
+            voiceRecords: voiceRecords
+        )
+        let fingerprint = try JournalSourceFingerprint.make(entries: entries)
+        guard
+            entries.count == draft.sourceEntryCount,
+            fingerprint == draft.sourceFingerprint
+        else {
+            throw JournalPersistenceError.sourceMaterialChanged
+        }
+    }
+
+    private func validatePhotoReferences(
+        in blocks: [JournalBlock],
+        scopeKey: String,
+        day: DayKey,
+        userID: UUID
+    ) throws {
+        let requestedPhotos = blocks.compactMap(\.photo)
+        guard !requestedPhotos.isEmpty else {
+            return
+        }
+
+        var historicalPhotos: Set<PhotoAttachment> = []
+        for version in try versionRecords(scopeKey: scopeKey) {
+            guard
+                version.scopeKey == scopeKey,
+                version.userID == userID,
+                version.dayKeyRawValue == day.storageValue
+            else {
+                continue
+            }
+            historicalPhotos.formUnion(
+                try JournalBlockCodec.decode(version.blocksData).compactMap(\.photo)
+            )
+        }
+
+        for photo in requestedPhotos where !historicalPhotos.contains(photo) {
+            guard try isCurrentEntryPhoto(photo, day: day, userID: userID) else {
+                throw JournalPersistenceError.unavailablePhotoReference(photo.id)
+            }
+        }
+    }
+
+    private func isCurrentEntryPhoto(
+        _ photo: PhotoAttachment,
+        day: DayKey,
+        userID: UUID
+    ) throws -> Bool {
+        let requestedPhotoID = photo.id
+        let requestedEntryID = photo.entryID
+        let requestedUserID = userID
+        let requestedDayKey = day.storageValue
+        var photoDescriptor = FetchDescriptor<PhotoAttachmentRecord>(
+            predicate: #Predicate<PhotoAttachmentRecord> { record in
+                record.id == requestedPhotoID
+                    && record.entryID == requestedEntryID
+                    && record.userID == requestedUserID
+                    && record.dayKeyRawValue == requestedDayKey
+            }
+        )
+        photoDescriptor.fetchLimit = 1
+        guard
+            let photoRecord = try modelContext.fetch(photoDescriptor).first,
+            photoRecord.domainAttachment() == photo
+        else {
+            return false
+        }
+
+        var entryDescriptor = FetchDescriptor<EntryRecord>(
+            predicate: #Predicate<EntryRecord> { record in
+                record.id == requestedEntryID
+                    && record.userID == requestedUserID
+                    && record.dayKeyRawValue == requestedDayKey
+            }
+        )
+        entryDescriptor.fetchLimit = 1
+        return try !modelContext.fetch(entryDescriptor).isEmpty
     }
 
     private static func matches(

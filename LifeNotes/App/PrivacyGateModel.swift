@@ -13,8 +13,17 @@ final class PrivacyGateModel: ObservableObject {
     }
 
     @Published private(set) var state: State = .locked
+    @Published private(set) var isSceneActive = false
     private var activeContext: LAContext?
     private var authenticationID: UUID?
+
+    var isContentCovered: Bool {
+        state != .unlocked || !isSceneActive
+    }
+
+    func setSceneActive(_ isActive: Bool) {
+        isSceneActive = isActive
+    }
 
     func unlock() async {
         guard state != .authenticating, state != .unlocked else {

@@ -88,6 +88,7 @@ struct FullScreenPhotoViewer: View {
                 }
             }
         }
+        .privacyProtectedPresentation()
     }
 }
 

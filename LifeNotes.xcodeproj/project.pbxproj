@@ -85,6 +85,10 @@
 		AA500000000000000000000F /* LocalJournalGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB500000000000000000000F /* LocalJournalGeneratorTests.swift */; };
 		AA5000000000000000000010 /* JournalPersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB5000000000000000000010 /* JournalPersistenceTests.swift */; };
 		AA5000000000000000000011 /* JournalModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB5000000000000000000011 /* JournalModelTests.swift */; };
+		AA6000000000000000000001 /* EntryLibraryModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB6000000000000000000001 /* EntryLibraryModel.swift */; };
+		AA6000000000000000000002 /* EntryEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB6000000000000000000002 /* EntryEditorView.swift */; };
+		AA6000000000000000000003 /* EntrySearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB6000000000000000000003 /* EntrySearchView.swift */; };
+		AA6000000000000000000004 /* EntryLibraryModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB6000000000000000000004 /* EntryLibraryModelTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -178,6 +182,10 @@
 		BB500000000000000000000F /* LocalJournalGeneratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalJournalGeneratorTests.swift; sourceTree = "<group>"; };
 		BB5000000000000000000010 /* JournalPersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalPersistenceTests.swift; sourceTree = "<group>"; };
 		BB5000000000000000000011 /* JournalModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalModelTests.swift; sourceTree = "<group>"; };
+		BB6000000000000000000001 /* EntryLibraryModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryLibraryModel.swift; sourceTree = "<group>"; };
+		BB6000000000000000000002 /* EntryEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryEditorView.swift; sourceTree = "<group>"; };
+		BB6000000000000000000003 /* EntrySearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntrySearchView.swift; sourceTree = "<group>"; };
+		BB6000000000000000000004 /* EntryLibraryModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryLibraryModelTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -334,6 +342,7 @@
 				CC000000000000000000000C /* Capture */,
 				CC000000000000000000000D /* Today */,
 				CC4000000000000000000001 /* Calendar */,
+				CC6000000000000000000001 /* Entries */,
 				CC5000000000000000000004 /* Journal */,
 				CC1000000000000000000003 /* Shared */,
 			);
@@ -367,6 +376,16 @@
 				BB4000000000000000000007 /* DayDetailView.swift */,
 			);
 			path = Calendar;
+			sourceTree = "<group>";
+		};
+		CC6000000000000000000001 /* Entries */ = {
+			isa = PBXGroup;
+			children = (
+				BB6000000000000000000001 /* EntryLibraryModel.swift */,
+				BB6000000000000000000002 /* EntryEditorView.swift */,
+				BB6000000000000000000003 /* EntrySearchView.swift */,
+			);
+			path = Entries;
 			sourceTree = "<group>";
 		};
 		CC000000000000000000000E /* DesignSystem */ = {
@@ -408,6 +427,7 @@
 				BB500000000000000000000F /* LocalJournalGeneratorTests.swift */,
 				BB5000000000000000000010 /* JournalPersistenceTests.swift */,
 				BB5000000000000000000011 /* JournalModelTests.swift */,
+				BB6000000000000000000004 /* EntryLibraryModelTests.swift */,
 			);
 			path = LifeNotesTests;
 			sourceTree = "<group>";
@@ -692,6 +712,9 @@
 				AA500000000000000000000B /* JournalEditorView.swift in Sources */,
 				AA500000000000000000000C /* JournalHistoryView.swift in Sources */,
 				AA500000000000000000000D /* JournalSection.swift in Sources */,
+				AA6000000000000000000001 /* EntryLibraryModel.swift in Sources */,
+				AA6000000000000000000002 /* EntryEditorView.swift in Sources */,
+				AA6000000000000000000003 /* EntrySearchView.swift in Sources */,
 				AA1000000000000000000004 /* PhotoAssetView.swift in Sources */,
 				AA200000000000000000000B /* VoicePlaybackView.swift in Sources */,
 				AA4000000000000000000008 /* FeelingFlower.swift in Sources */,
@@ -724,6 +747,7 @@
 				AA500000000000000000000F /* LocalJournalGeneratorTests.swift in Sources */,
 				AA5000000000000000000010 /* JournalPersistenceTests.swift in Sources */,
 				AA5000000000000000000011 /* JournalModelTests.swift in Sources */,
+				AA6000000000000000000004 /* EntryLibraryModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -97,6 +97,7 @@ struct JournalHistoryView: View {
                 model.dismissPreview()
             }
         }
+        .privacyProtectedPresentation()
     }
 
     private var selectedVersion: JournalVersion? {
