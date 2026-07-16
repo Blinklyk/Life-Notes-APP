@@ -89,6 +89,15 @@
 		AA6000000000000000000002 /* EntryEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB6000000000000000000002 /* EntryEditorView.swift */; };
 		AA6000000000000000000003 /* EntrySearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB6000000000000000000003 /* EntrySearchView.swift */; };
 		AA6000000000000000000004 /* EntryLibraryModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB6000000000000000000004 /* EntryLibraryModelTests.swift */; };
+		AA7000000000000000000001 /* AIBackendConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7000000000000000000001 /* AIBackendConfiguration.swift */; };
+		AA7000000000000000000002 /* KeychainAIBackendConfigurationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7000000000000000000002 /* KeychainAIBackendConfigurationStore.swift */; };
+		AA7000000000000000000003 /* HTTPTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7000000000000000000003 /* HTTPTransport.swift */; };
+		AA7000000000000000000004 /* RemoteJournalGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7000000000000000000004 /* RemoteJournalGenerator.swift */; };
+		AA7000000000000000000005 /* BackendSettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7000000000000000000005 /* BackendSettingsModel.swift */; };
+		AA7000000000000000000006 /* BackendSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7000000000000000000006 /* BackendSettingsView.swift */; };
+		AA7000000000000000000007 /* AIBackendConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7000000000000000000007 /* AIBackendConfigurationTests.swift */; };
+		AA7000000000000000000008 /* RemoteJournalGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7000000000000000000008 /* RemoteJournalGeneratorTests.swift */; };
+		AA7000000000000000000009 /* BackendSettingsModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7000000000000000000009 /* BackendSettingsModelTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -186,6 +195,17 @@
 		BB6000000000000000000002 /* EntryEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryEditorView.swift; sourceTree = "<group>"; };
 		BB6000000000000000000003 /* EntrySearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntrySearchView.swift; sourceTree = "<group>"; };
 		BB6000000000000000000004 /* EntryLibraryModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryLibraryModelTests.swift; sourceTree = "<group>"; };
+		BB7000000000000000000001 /* AIBackendConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIBackendConfiguration.swift; sourceTree = "<group>"; };
+		BB7000000000000000000002 /* KeychainAIBackendConfigurationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainAIBackendConfigurationStore.swift; sourceTree = "<group>"; };
+		BB7000000000000000000003 /* HTTPTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPTransport.swift; sourceTree = "<group>"; };
+		BB7000000000000000000004 /* RemoteJournalGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteJournalGenerator.swift; sourceTree = "<group>"; };
+		BB7000000000000000000005 /* BackendSettingsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendSettingsModel.swift; sourceTree = "<group>"; };
+		BB7000000000000000000006 /* BackendSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendSettingsView.swift; sourceTree = "<group>"; };
+		BB7000000000000000000007 /* AIBackendConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIBackendConfigurationTests.swift; sourceTree = "<group>"; };
+		BB7000000000000000000008 /* RemoteJournalGeneratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteJournalGeneratorTests.swift; sourceTree = "<group>"; };
+		BB7000000000000000000009 /* BackendSettingsModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendSettingsModelTests.swift; sourceTree = "<group>"; };
+		BB700000000000000000000A /* Info-Debug.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-Debug.plist"; sourceTree = "<group>"; };
+		BB700000000000000000000B /* Info-Release.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-Release.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -242,6 +262,7 @@
 				CC000000000000000000000B /* Features */,
 				CC000000000000000000000E /* DesignSystem */,
 				CC000000000000000000000F /* Support */,
+				CC7000000000000000000004 /* Resources */,
 			);
 			path = LifeNotes;
 			sourceTree = "<group>";
@@ -307,6 +328,8 @@
 				CC2000000000000000000005 /* Audio */,
 				CC2000000000000000000006 /* Transcription */,
 				CC5000000000000000000003 /* JournalGeneration */,
+				CC7000000000000000000001 /* Security */,
+				CC7000000000000000000002 /* Networking */,
 			);
 			path = Infrastructure;
 			sourceTree = "<group>";
@@ -345,6 +368,7 @@
 				CC6000000000000000000001 /* Entries */,
 				CC5000000000000000000004 /* Journal */,
 				CC1000000000000000000003 /* Shared */,
+				CC7000000000000000000003 /* Settings */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -428,6 +452,9 @@
 				BB5000000000000000000010 /* JournalPersistenceTests.swift */,
 				BB5000000000000000000011 /* JournalModelTests.swift */,
 				BB6000000000000000000004 /* EntryLibraryModelTests.swift */,
+				BB7000000000000000000007 /* AIBackendConfigurationTests.swift */,
+				BB7000000000000000000008 /* RemoteJournalGeneratorTests.swift */,
+				BB7000000000000000000009 /* BackendSettingsModelTests.swift */,
 			);
 			path = LifeNotesTests;
 			sourceTree = "<group>";
@@ -528,6 +555,7 @@
 			isa = PBXGroup;
 			children = (
 				BB5000000000000000000002 /* JournalGenerator.swift */,
+				BB7000000000000000000001 /* AIBackendConfiguration.swift */,
 			);
 			path = JournalGeneration;
 			sourceTree = "<group>";
@@ -544,6 +572,7 @@
 			isa = PBXGroup;
 			children = (
 				BB5000000000000000000003 /* LocalJournalGenerator.swift */,
+				BB7000000000000000000004 /* RemoteJournalGenerator.swift */,
 			);
 			path = JournalGeneration;
 			sourceTree = "<group>";
@@ -558,6 +587,40 @@
 				BB500000000000000000000D /* JournalSection.swift */,
 			);
 			path = Journal;
+			sourceTree = "<group>";
+		};
+		CC7000000000000000000001 /* Security */ = {
+			isa = PBXGroup;
+			children = (
+				BB7000000000000000000002 /* KeychainAIBackendConfigurationStore.swift */,
+			);
+			path = Security;
+			sourceTree = "<group>";
+		};
+		CC7000000000000000000002 /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				BB7000000000000000000003 /* HTTPTransport.swift */,
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
+		CC7000000000000000000003 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				BB7000000000000000000005 /* BackendSettingsModel.swift */,
+				BB7000000000000000000006 /* BackendSettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		CC7000000000000000000004 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				BB700000000000000000000A /* Info-Debug.plist */,
+				BB700000000000000000000B /* Info-Release.plist */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -674,6 +737,7 @@
 				AA5000000000000000000001 /* Journal.swift in Sources */,
 				AA0000000000000000000003 /* DayWorkspace.swift in Sources */,
 				AA5000000000000000000002 /* JournalGenerator.swift in Sources */,
+				AA7000000000000000000001 /* AIBackendConfiguration.swift in Sources */,
 				AA5000000000000000000004 /* JournalWorkspace.swift in Sources */,
 				AA1000000000000000000001 /* PhotoLibrary.swift in Sources */,
 				AA2000000000000000000002 /* AudioLibrary.swift in Sources */,
@@ -699,6 +763,9 @@
 				AA2000000000000000000007 /* SystemSpeechTranscriber.swift in Sources */,
 				AA1000000000000000000007 /* FileCaptureDraftStore.swift in Sources */,
 				AA5000000000000000000003 /* LocalJournalGenerator.swift in Sources */,
+				AA7000000000000000000002 /* KeychainAIBackendConfigurationStore.swift in Sources */,
+				AA7000000000000000000003 /* HTTPTransport.swift in Sources */,
+				AA7000000000000000000004 /* RemoteJournalGenerator.swift in Sources */,
 				AA000000000000000000000F /* CaptureView.swift in Sources */,
 				AA200000000000000000000C /* VoiceCaptureCard.swift in Sources */,
 				AA0000000000000000000010 /* TodayView.swift in Sources */,
@@ -712,6 +779,8 @@
 				AA500000000000000000000B /* JournalEditorView.swift in Sources */,
 				AA500000000000000000000C /* JournalHistoryView.swift in Sources */,
 				AA500000000000000000000D /* JournalSection.swift in Sources */,
+				AA7000000000000000000005 /* BackendSettingsModel.swift in Sources */,
+				AA7000000000000000000006 /* BackendSettingsView.swift in Sources */,
 				AA6000000000000000000001 /* EntryLibraryModel.swift in Sources */,
 				AA6000000000000000000002 /* EntryEditorView.swift in Sources */,
 				AA6000000000000000000003 /* EntrySearchView.swift in Sources */,
@@ -748,6 +817,9 @@
 				AA5000000000000000000010 /* JournalPersistenceTests.swift in Sources */,
 				AA5000000000000000000011 /* JournalModelTests.swift in Sources */,
 				AA6000000000000000000004 /* EntryLibraryModelTests.swift in Sources */,
+				AA7000000000000000000007 /* AIBackendConfigurationTests.swift in Sources */,
+				AA7000000000000000000008 /* RemoteJournalGeneratorTests.swift in Sources */,
+				AA7000000000000000000009 /* BackendSettingsModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -882,16 +954,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_TESTABILITY = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "随心记";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
-				INFOPLIST_KEY_NSFaceIDUsageDescription = "用于解锁随心记，保护你的私人记录。";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "用于录制随心语音，原始录音默认仅保存在你的设备上。";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "用于将随心语音转成可编辑文字；设备不支持离线识别时可能使用网络。";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "LifeNotes/Resources/Info-Debug.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -914,16 +978,8 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "随心记";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
-				INFOPLIST_KEY_NSFaceIDUsageDescription = "用于解锁随心记，保护你的私人记录。";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "用于录制随心语音，原始录音默认仅保存在你的设备上。";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "用于将随心语音转成可编辑文字；设备不支持离线识别时可能使用网络。";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "LifeNotes/Resources/Info-Release.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

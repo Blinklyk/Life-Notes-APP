@@ -264,7 +264,7 @@ final class JournalModel: ObservableObject {
             }
             guard generated.sourceFingerprint == expectedFingerprint,
                   generated.sourceEntryCount == sourceEntries.count,
-                  generated.generatorIdentifier == generator.identifier,
+                  generator.acceptsGeneratorIdentifier(generated.generatorIdentifier),
                   Self.hasMeaningfulJournalContent(
                       title: generated.title,
                       blocks: generated.blocks
@@ -286,16 +286,28 @@ final class JournalModel: ObservableObject {
                 generatorIdentifier: generated.generatorIdentifier,
                 createdAt: now()
             )
-            return await append(
+            let didAppend = await append(
                 draft,
                 context: context,
                 failureMessage: "暂时无法生成并保存随心日记，请稍后重试。"
             )
+            if didAppend,
+               isCurrentOperation(context),
+               let notice = generated.notice {
+                alert = Alert(message: notice)
+            }
+            return didAppend
         } catch {
             guard isCurrentGenerationInput(context) else {
                 return false
             }
-            alert = Alert(message: "暂时无法生成并保存随心日记，请稍后重试。")
+            if let remoteError = error as? RemoteJournalGenerationError {
+                alert = Alert(message: remoteError.localizedDescription)
+            } else if let configurationError = error as? AIBackendConfigurationError {
+                alert = Alert(message: configurationError.localizedDescription)
+            } else {
+                alert = Alert(message: "暂时无法生成并保存随心日记，请稍后重试。")
+            }
             return false
         }
     }

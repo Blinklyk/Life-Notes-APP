@@ -5,6 +5,7 @@ struct TodayView: View {
     @ObservedObject var appModel: AppModel
     @ObservedObject var journalModel: JournalModel
     @ObservedObject var entryLibraryModel: EntryLibraryModel
+    let onShowBackendSettings: () -> Void
     @AccessibilityFocusState private var isTitleFocused: Bool
     @State private var presentedPhoto: FullScreenPhotoItem?
     @State private var editingVoice: VoiceAttachment?
@@ -72,6 +73,7 @@ struct TodayView: View {
                     timeZone: appModel.todayTimeZone,
                     onNewEntry: { appModel.showCapture() },
                     onSearch: { showsSearch = true },
+                    onShowBackendSettings: onShowBackendSettings,
                     isTitleFocused: $isTitleFocused
                 )
 
@@ -239,6 +241,7 @@ private struct TodayHeader: View {
     let timeZone: TimeZone
     let onNewEntry: () -> Void
     let onSearch: () -> Void
+    let onShowBackendSettings: () -> Void
     let isTitleFocused: AccessibilityFocusState<Bool>.Binding
 
     var body: some View {
@@ -272,6 +275,17 @@ private struct TodayHeader: View {
 
     private var actionButtons: some View {
         HStack(spacing: 8) {
+            Button(action: onShowBackendSettings) {
+                Image(systemName: "gearshape")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(AppTheme.accent)
+                    .frame(width: 44, height: 44)
+                    .background(AppTheme.accentSoft, in: RoundedRectangle(cornerRadius: 8))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("AI 与后端设置")
+            .help("设置")
+
             Button(action: onSearch) {
                 Image(systemName: "magnifyingglass")
                     .font(.title3.weight(.semibold))

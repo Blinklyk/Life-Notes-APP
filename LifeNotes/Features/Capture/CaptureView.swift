@@ -6,6 +6,7 @@ import UIKit
 
 struct CaptureView: View {
     @ObservedObject var appModel: AppModel
+    let onShowBackendSettings: () -> Void
     @FocusState private var isEditorFocused: Bool
     @State private var selectedPhotos: [PhotosPickerItem] = []
     @State private var presentedPhoto: FullScreenPhotoItem?
@@ -14,7 +15,10 @@ struct CaptureView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                CaptureHeader(onShowToday: { appModel.showToday() })
+                CaptureHeader(
+                    onShowToday: { appModel.showToday() },
+                    onShowBackendSettings: onShowBackendSettings
+                )
 
                 TimelineView(.periodic(from: .now, by: 60)) { context in
                     Text(
@@ -420,18 +424,19 @@ private struct DraftPhotoRow: View {
 
 private struct CaptureHeader: View {
     let onShowToday: () -> Void
+    let onShowBackendSettings: () -> Void
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
             HStack(spacing: 16) {
                 brand
                 Spacer(minLength: 12)
-                todayButton
+                actions
             }
 
             VStack(alignment: .leading, spacing: 8) {
                 brand
-                todayButton
+                actions
             }
         }
     }
@@ -467,6 +472,23 @@ private struct CaptureHeader: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("查看今天")
+    }
+
+    private var actions: some View {
+        HStack(spacing: 8) {
+            Button(action: onShowBackendSettings) {
+                Image(systemName: "gearshape")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(AppTheme.accent)
+                    .frame(width: 44, height: 44)
+                    .background(AppTheme.accentSoft, in: RoundedRectangle(cornerRadius: 8))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("AI 与后端设置")
+            .help("设置")
+
+            todayButton
+        }
     }
 }
 

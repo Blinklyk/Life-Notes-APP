@@ -4,8 +4,8 @@
 
 - UI：SwiftUI
 - 本地数据：SwiftData（最低系统版本允许时）
-- 图片/视频选择：PhotosUI
-- 相机与录音：AVFoundation
+- 图片选择：PhotosUI
+- 录音：AVFoundation
 - 语音识别：Speech framework，并把转写设计为可失败的异步任务
 - 并发：Swift Concurrency
 - 敏感配置：Keychain；服务端 AI 密钥不得内置在 App 中
@@ -14,7 +14,7 @@
 
 ## 2. 模块边界
 
-- `Capture`：接收文字、相册、相机和录音输入，产出待保存素材。
+- `Capture`：接收文字、相册图片和录音输入，产出待保存素材；初代不支持视频或 App 内拍照。
 - `Timeline`：按记录日读取并展示原始记录。
 - `MediaLibrary`：管理媒体文件、缩略图、清理和存储占用。
 - `Transcription`：把音频转写为可编辑文本，不承担音频保存职责。
@@ -35,7 +35,7 @@
 ## 4. AI 与隐私边界
 
 - 客户端调用自有后端，由后端保管模型密钥、执行限流与内容大小控制。
-- 首版优先发送文字、用户修正后的转写及明确生成的媒体说明；是否上传原始媒体由用户选择并在界面说明。
+- 初代只发送本次随机 request ID、表达风格、文字、非空图片批注和非空转写；不发送记录日、素材 fingerprint、本地稳定素材 ID、空媒体数量，也不上传原始图片、原始录音、媒体元数据或客户端文件路径。后端不会把 request ID 转发给 DeepSeek。
 - 生成请求使用当天素材的不可变快照，响应回来后若素材已变化，将结果标记为基于旧版本。
 - 日记提示词应要求忠于事实、避免虚构，并在素材不足时输出克制的短稿。
 - 用户编辑后的文本默认只用于当前日记；用于学习表达风格必须单独征得同意。
@@ -44,7 +44,7 @@
 
 1. 创建 SwiftUI 工程、主题和底部导航。
 2. 完成文字记录、本地模型和今日时间线。
-3. 加入图片/视频导入与媒体文件管理。
+3. 加入图片导入与媒体文件管理。
 4. 加入录音、播放、权限与中断恢复。
 5. 加入转写任务和可编辑转写文本。
 6. 完成日历、每日感受和重要标记。
@@ -52,3 +52,16 @@
 8. 补齐数据导出、删除、无障碍和故障恢复。
 
 每一步都应形成可运行的纵向闭环，真实 AI 接入不应阻塞基础记录体验。
+
+## 6. 当前 AI 后端与部署拓扑
+
+- 跳过 Windows 专用宿主。在 macOS 开发和联调 `backend/` 的同一套 Linux-ready FastAPI 服务，容器验证后直接迁云。
+- 上游使用可配置的 DeepSeek Chat Completions JSON mode，默认模型为 `deepseek-v4-pro`；`DEEPSEEK_BASE_URL`、`DEEPSEEK_API_KEY` 和模型名只由后端环境变量或云端 secret 提供。
+- iPhone 只保存自有后端 URL 和 Bearer token，二者作为单个 Keychain snapshot 原子更新；DeepSeek API key 永远不进入客户端。
+- Simulator 可用 Mac loopback；Debug 真机的 HTTP 只允许规范私网/CGNAT IP、`.local` 或完整 `*.ts.net` 地址，普通单标签 MagicDNS 必须改用完整 Tailscale FQDN。Release 强制 HTTPS，推荐通过 Tailscale Serve 或云端入口终止 TLS。
+- `/v1/journals/generate` 保持无状态，不保存请求正文；认证与限流先于 body 解析，请求/响应采用 UTF-8 字节预算和流式硬上限，所有 `/v1` 响应均为 `no-store`。DeepSeek 只返回标题和正文，客户端使用本地素材重新拼装照片块并验证本地 fingerprint。
+- 断网、DNS、超时、限流和服务端临时错误可回退本地生成；取消、TLS、认证和契约错误不得静默回退。
+
+## 7. 云同步后续边界
+
+AI 代理不承担云同步。多设备同步需要独立设计用户认证、服务端 cursor、离线 outbox、媒体对象存储、删除 tombstone 和冲突合并；只有在同一容器完成本地与云端部署验证后再进入该阶段。

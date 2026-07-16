@@ -30,12 +30,36 @@ struct GeneratedJournalDraft: Equatable, Sendable {
     let sourceFingerprint: JournalSourceFingerprint
     let sourceEntryCount: Int
     let generatorIdentifier: String
+    let notice: String?
+
+    init(
+        title: String,
+        blocks: [JournalBlock],
+        sourceFingerprint: JournalSourceFingerprint,
+        sourceEntryCount: Int,
+        generatorIdentifier: String,
+        notice: String? = nil
+    ) {
+        self.title = title
+        self.blocks = blocks
+        self.sourceFingerprint = sourceFingerprint
+        self.sourceEntryCount = sourceEntryCount
+        self.generatorIdentifier = generatorIdentifier
+        self.notice = notice
+    }
 }
 
 protocol JournalGenerator: Sendable {
     var identifier: String { get }
 
     func generate(_ request: JournalGenerationRequest) async throws -> GeneratedJournalDraft
+    func acceptsGeneratorIdentifier(_ identifier: String) -> Bool
+}
+
+extension JournalGenerator {
+    func acceptsGeneratorIdentifier(_ identifier: String) -> Bool {
+        identifier == self.identifier
+    }
 }
 
 extension JournalSourceFingerprint {

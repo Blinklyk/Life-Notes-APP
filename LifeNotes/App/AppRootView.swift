@@ -6,8 +6,10 @@ struct AppRootView: View {
     @ObservedObject var calendarModel: CalendarModel
     @ObservedObject var journalModel: JournalModel
     @ObservedObject var entryLibraryModel: EntryLibraryModel
+    @ObservedObject var backendSettingsModel: BackendSettingsModel
     @StateObject private var privacyGate = PrivacyGateModel()
     @State private var hasCompletedInitialUnlock = false
+    @State private var showsBackendSettings = false
 
     var body: some View {
         ZStack {
@@ -71,6 +73,9 @@ struct AppRootView: View {
                 dismissButton: .default(Text("好"))
             )
         }
+        .sheet(isPresented: $showsBackendSettings) {
+            BackendSettingsView(model: backendSettingsModel)
+        }
     }
 
     private var shouldCoverContent: Bool {
@@ -81,19 +86,24 @@ struct AppRootView: View {
     private var content: some View {
         switch appModel.route {
         case .capture:
-            CaptureView(appModel: appModel)
+            CaptureView(
+                appModel: appModel,
+                onShowBackendSettings: { showsBackendSettings = true }
+            )
         case .today:
             TodayView(
                 appModel: appModel,
                 journalModel: journalModel,
-                entryLibraryModel: entryLibraryModel
+                entryLibraryModel: entryLibraryModel,
+                onShowBackendSettings: { showsBackendSettings = true }
             )
         case .calendar:
             CalendarView(
                 appModel: appModel,
                 calendarModel: calendarModel,
                 journalModel: journalModel,
-                entryLibraryModel: entryLibraryModel
+                entryLibraryModel: entryLibraryModel,
+                onShowBackendSettings: { showsBackendSettings = true }
             )
         }
     }

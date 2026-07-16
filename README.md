@@ -26,7 +26,7 @@ Life Notes App
 
 ## 当前状态
 
-项目已创建 iOS 17+ 原生 SwiftUI 工程 [LifeNotes.xcodeproj](LifeNotes.xcodeproj)，当前已实现七个本地纵向闭环：
+项目已创建 iOS 17+ 原生 SwiftUI 工程 [LifeNotes.xcodeproj](LifeNotes.xcodeproj)，当前已实现七个本地纵向闭环和首个真实 AI 后端闭环：
 
 `启动并解锁 → 立即记录纯文字 → SwiftData 本地保存 → 进入今天页 → 重启后仍可读取`
 
@@ -41,6 +41,8 @@ Life Notes App
 `读取某日全部原始素材 → 本地事实型生成随心日记 → 完整编辑图文块 → 重新生成或恢复历史版本 → 月历显示日记标记`
 
 `从今天、历史日期或搜索结果打开随心记录 → 编辑正文、逐图批注和语音转写 → revision 冲突保护 → 永久删除并安全清理媒体 → 全文搜索立即同步`
+
+`在 iPhone 配置自有后端 → Keychain 保存访问令牌 → 白名单上传文字素材 → DeepSeek 生成日记正文 → 本地拼回照片并保存版本 → 临时网络故障自动回退本地生成`
 
 图片闭环包含以下约束：
 
@@ -80,7 +82,7 @@ Life Notes App
 
 - 随心记录与随心日记独立保存；生成、编辑、重新生成或恢复历史版本都不会改写原始记录。
 - 当前本地生成器只使用整体文字、逐图批注、语音转写、素材数量和原始照片快照，不分析音色情绪，也不会补写素材中不存在的事实。
-- 支持自然、简洁和细腻三种显式表达风格；选择会保存在本机，真实 AI 接入前不从用户编辑内容自动学习风格。
+- 支持自然、简洁和细腻三种显式表达风格；选择会保存在本机，不会从用户编辑内容自动学习风格。
 - 日记由标题、正文和照片块组成；编辑器支持新增、删除、caption、上下排序，并在退出未保存内容前确认。
 - 每次生成、编辑和恢复都会追加不可变版本；当前版本与完整历史可预览，恢复历史会创建新版本而不是覆盖旧版本。
 - 素材 fingerprint 用于提示“有新内容，可更新”；迟到加载、同日转写刷新、跨日期切换和已落库 append 均有竞态保护。
@@ -97,9 +99,20 @@ Life Notes App
 - 附件读取与写入会校验 `entryID`、`userID`、`dayKey` 和语音目标照片 owner；旧版无 `revision` 的磁盘 store 可迁移为 revision 0 后继续编辑。
 - App 进入 inactive/background 时，记录编辑器、日记编辑器、历史、语音、每日状态和全屏照片等独立 presentation 都由共享隐私门覆盖并禁用交互。
 
-工程包含 `LifeNotes` App target 与 `LifeNotesTests` 单元测试 target。当前在 Xcode 26.6、Swift 6 完整严格并发及 warnings-as-errors 下通过 186 项单元与集成测试；最新 Xcode 报告为 `Test-LifeNotes-2026.07.15_16-08-39-+0800.xcresult`，运行于 iPhone 17 Pro / iOS 26.5 Simulator。开发环境最低需要 Xcode 15，并安装 iOS 17+ Simulator runtime。
+真实 AI 后端闭环包含以下约束：
 
-下一阶段跳过 Windows 专用宿主：先在 macOS 开发并联调面向 Linux 云环境的跨平台 AI 后端，Simulator 直连 Mac，真机通过局域网或 Tailscale 访问；验证后把同一容器直接部署到云端。真实 AI 代理与云同步、多设备冲突合并分阶段实现，OpenAI API key 只保存在后端。
+- `backend/` 是 macOS 开发、Linux-ready 的 FastAPI 服务，提供 `/health` 和 Bearer 保护的 `/v1/journals/generate`；认证与限流先于 body 解析，并带请求/响应流式硬上限、provider 超时、`no-store` 和无正文日志。
+- 上游使用可配置的 DeepSeek Chat Completions JSON mode，默认模型为 `deepseek-v4-pro`；`DEEPSEEK_BASE_URL`、`DEEPSEEK_API_KEY` 和模型名只存在于后端环境变量或云端 secret，绝不写入 iPhone 或 git。
+- iPhone 的“AI 与后端”设置只保存自有后端地址和访问令牌；地址与 token 作为一个 Keychain snapshot 原子更新，并使用 `WhenUnlockedThisDeviceOnly` 可访问级别。
+- 远程 DTO 只白名单发送本次随机 request ID、表达风格、正文、非空图片批注和非空语音转写；不会发送记录日、素材 fingerprint、本地稳定 ID、用户 ID、时间戳、时区、空媒体数量、图片或录音二进制、媒体元数据和本机路径。request ID 不会继续转发给 DeepSeek。
+- 后端只返回标题与正文，照片块始终由 iPhone 使用本地素材重新拼装；客户端不信任服务端返回的 fingerprint、素材数或照片引用。
+- 未配置或关闭后端时直接使用本地生成器；断网、DNS、连接超时、`429` 和 `5xx` 才自动回退，取消、TLS、认证、其他 `4xx` 和响应契约错误会明确失败，不静默掩盖配置问题。
+- Debug 的 HTTP 仅允许规范 loopback/私网/CGNAT/link-local IP、`.local` 或完整 `*.ts.net` 主机名；拒绝普通单标签和另类数字 IPv4，Release 则强制 HTTPS 且 Info.plist 不含 HTTP 例外。Simulator 可直连 Mac，真机使用局域网或 Tailscale。
+- AI 代理与云同步保持独立；当前后端不保存日记、图片或录音，也不承担多设备同步。后端部署与环境变量详见 [backend/README.md](backend/README.md)。
+
+工程包含 `LifeNotes` App target、`LifeNotesTests` 单元测试 target 和独立 Python 后端。Xcode 26.6 在 iPhone 17 Pro / iOS 26.5 Simulator 完成 219 项单元与集成测试，219 项通过；最新结果包为 `/tmp/LifeNotesDeepSeekFinalFull-20260716-continue.xcresult`，构建启用了 Swift 6 完整严格并发和 warnings-as-errors。后端在 Python 3.12.13 下执行 82 项 pytest，82 项通过，并完成 compileall、wheel 构建和真实 Uvicorn 健康/鉴权检查。开发环境最低需要 Xcode 15，并安装 iOS 17+ Simulator runtime；后端使用 Python 3.11+，容器基于 Python 3.12。Dockerfile 已就绪，但当前 Docker Desktop 4.5.0 在拉取 `python:3.12-slim` 时遇到 digest mismatch/registry EOF，镜像构建和容器运行 smoke 仍需升级 Docker Desktop 后补验。
+
+后续不再实现 Windows 专用后端。下一阶段先验证并把同一容器部署到云端，再单独实现云同步与多设备同步：认证、服务端 cursor、离线 outbox、媒体对象存储、删除 tombstone 和冲突合并不会混入 AI 生成接口。
 
 准备在 macOS 上继续开发时，请从 [docs/MACOS-START.md](docs/MACOS-START.md) 开始，并先阅读根目录 [AGENTS.md](AGENTS.md)。
 

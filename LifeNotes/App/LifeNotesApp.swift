@@ -11,6 +11,7 @@ struct LifeNotesApp: App {
     @StateObject private var calendarModel: CalendarModel
     @StateObject private var journalModel: JournalModel
     @StateObject private var entryLibraryModel: EntryLibraryModel
+    @StateObject private var backendSettingsModel: BackendSettingsModel
 
     init() {
         do {
@@ -23,6 +24,8 @@ struct LifeNotesApp: App {
             let voiceRecorder = SystemVoiceRecorder()
             let speechTranscriber = SystemSpeechTranscriber()
             let voicePlayer = SystemVoicePlayer()
+            let backendConfigurationStore = KeychainAIBackendConfigurationStore()
+            let backendTransport = URLSessionHTTPTransport()
             let userID = LocalUserIdentity.loadOrCreate()
             let writingStyle = UserDefaults.standard
                 .string(forKey: Self.writingStyleDefaultsKey)
@@ -51,7 +54,11 @@ struct LifeNotesApp: App {
                 wrappedValue: JournalModel(
                     dayWorkspace: workspace,
                     journalWorkspace: journalWorkspace,
-                    generator: LocalJournalGenerator(),
+                    generator: FallbackJournalGenerator(
+                        configurationStore: backendConfigurationStore,
+                        remote: RemoteJournalGenerator(transport: backendTransport),
+                        fallback: LocalJournalGenerator()
+                    ),
                     userID: userID,
                     writingStyle: writingStyle,
                     onWritingStyleChange: { style in
@@ -70,6 +77,14 @@ struct LifeNotesApp: App {
                     audioLibrary: audioLibrary
                 )
             )
+            _backendSettingsModel = StateObject(
+                wrappedValue: BackendSettingsModel(
+                    configurationStore: backendConfigurationStore,
+                    healthChecker: HTTPAIBackendHealthChecker(
+                        transport: backendTransport
+                    )
+                )
+            )
         } catch {
             fatalError("无法初始化本地数据：\(error.localizedDescription)")
         }
@@ -81,7 +96,8 @@ struct LifeNotesApp: App {
                 appModel: appModel,
                 calendarModel: calendarModel,
                 journalModel: journalModel,
-                entryLibraryModel: entryLibraryModel
+                entryLibraryModel: entryLibraryModel,
+                backendSettingsModel: backendSettingsModel
             )
         }
         .modelContainer(modelContainer)

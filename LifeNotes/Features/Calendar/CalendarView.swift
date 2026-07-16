@@ -6,6 +6,7 @@ struct CalendarView: View {
     @ObservedObject var calendarModel: CalendarModel
     @ObservedObject var journalModel: JournalModel
     @ObservedObject var entryLibraryModel: EntryLibraryModel
+    let onShowBackendSettings: () -> Void
     @State private var path: [DayKey] = []
     @State private var showsSearch = false
     @State private var entryPendingDeletion: Entry?
@@ -136,6 +137,17 @@ struct CalendarView: View {
     private var headerActions: some View {
         HStack(spacing: 10) {
             currentMonthButton
+
+            Button(action: onShowBackendSettings) {
+                Image(systemName: "gearshape")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(AppTheme.accent)
+                    .frame(width: 44, height: 44)
+                    .background(AppTheme.accentSoft, in: RoundedRectangle(cornerRadius: 8))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("AI 与后端设置")
+            .help("设置")
 
             Button {
                 showsSearch = true

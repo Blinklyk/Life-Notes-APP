@@ -328,3 +328,32 @@
 - 编辑稿保留于进程内；进入后台会隐私覆盖，但若系统终止进程，未保存编辑仍会丢失。
 - 下一阶段按最新决定在 macOS 实现跨平台、Linux-ready、容器化 AI 后端；AI 代理只发送文字、图片批注和语音转写，不发送本机路径，API key 只在后端环境变量或 secret 中保存。
 - 云同步与多设备同步作为独立阶段，需要 tombstone、离线 outbox、服务端 cursor、认证、对象存储和冲突合并，不能与首个 AI 接口混为一体。
+
+## 2026-07-15：DeepSeek AI 后端与 iPhone 联调闭环
+
+### 用户要求与路线调整
+
+- 按任务 `019f64a1-2216-7812-993d-1ca7c37c2d03` 的结论修改后续路线：跳过 Windows 专用宿主，在 macOS 开发面向 Linux 的同一套容器，Simulator 直连 Mac，真机使用局域网或 Tailscale，验证后直接迁云。
+- 模型供应商由早期 OpenAI/GPT 计划改为 DeepSeek，默认模型明确为 `deepseek-v4-pro`；用户之后提供实际 `base_url` 和 `api_key`。
+- DeepSeek `base_url`、`api_key` 和模型名必须位于后端环境变量或云端 secret，不能保存在 iPhone；iPhone 只配置自有后端地址和访问令牌。
+- AI 代理只接收正文、图片批注和语音转写，不上传图片、录音、媒体元数据或本机路径；云同步和多设备同步继续作为独立阶段。
+
+### 本次实际修改
+
+- 新增 `backend/` FastAPI 服务，提供健康检查和 Bearer 保护的日记生成 API；使用 DeepSeek Chat Completions JSON mode，并加入严格 Pydantic 契约、请求体上限、限流、超时、无正文日志、Dockerfile 和测试。
+- iOS 新增白名单远程 DTO、DeepSeek provenance 校验、网络错误分类和本地生成回退；服务端只返回标题/正文，照片始终由本地素材拼回。
+- 新增 Keychain 原子配置仓库和“AI 与后端”设置 sheet；设置入口覆盖立即记录、今天和日历，隐私门同时覆盖设置 presentation。
+- Debug Info.plist 允许本地联调 HTTP，但运行时只放行 loopback、局域网和 Tailscale；Release Info.plist 无 HTTP 例外且 URL policy 强制 HTTPS。
+- 更新 `README.md`，记录当前第八个闭环、DeepSeek 配置与隐私边界，并把后续重点改为容器迁云和独立云同步。
+
+### 验证
+
+- FastAPI 后端在 Python 3.12.13 下执行 82 项 pytest，82 项通过；compileall、wheel 构建、真实 Uvicorn `/health` 200 和未鉴权畸形 JSON 在解析前返回 401 通过。
+- Xcode 26.6 / iPhone 17 Pro / iOS 26.5 Simulator 使用 Swift 6 完整严格并发和 warnings-as-errors 全量执行 219 项测试，219 项通过；最终结果包为 `/tmp/LifeNotesDeepSeekFinalFull-20260716-continue.xcresult`。
+- 新增网络、Keychain、DTO、回退和设置测试使用 Swift 6 完整严格并发与 warnings-as-errors 独立 typecheck 通过；全量 Swift parse、plist lint 和 `git diff --check` 通过。
+
+### 风险与下一步
+
+- 当前环境无法在线核对 DeepSeek 官方文档站，provider 按可配置的 OpenAI-compatible Chat Completions JSON Output 协议实现；拿到用户实际 `base_url/api_key` 后仍需做一次真实生成联调。
+- Dockerfile 已使用 Python 3.12 slim、独立 test stage、非 root runtime 和健康检查；当前 Docker Desktop 4.5.0 拉取基础镜像时连续出现 digest mismatch 或 Docker Hub EOF，尚未完成 image build/runtime smoke，需升级 Docker Desktop 后补验。
+- 后续先把同一容器部署到云端；云同步另行实现认证、cursor、outbox、对象存储、tombstone 和多设备冲突合并。
